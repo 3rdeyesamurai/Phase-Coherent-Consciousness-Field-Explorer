@@ -1,0 +1,39 @@
+{
+  "gases": ["Iodine", "Xenon", "Krypton", "Argon", "WaterOH"],
+  "gas_masses": {
+    "Iodine": 126.9,
+    "Xenon": 131.3,
+    "Krypton": 83.8,
+    "Argon": 40.0,
+    "WaterOH": 17.0
+  },
+  "ion_engine": {
+    "Va_range": [500, 4000],
+    "Va_steps": 20,
+    "Ib_range": [0.1, 5.0],
+    "Ib_steps": 15,
+    "tau_open": 0.7,
+    "tau_trans": 0.95,
+    "divergence": {
+      "model": "gaussian",
+      "param_deg": 5.0
+    }
+  },
+  "hall_thruster": {
+    "Vd_range": [200, 800],
+    "Vd_steps": 20,
+    "mdot_range": [1e-6, 10e-6],
+    "mdot_steps": 15,
+    "eta_acc": 0.6,
+    "tau_prop": 0.85,
+    "divergence": {
+      "model": "cos",
+      "param_deg": 30.0
+    }
+  },
+  "constants": {
+    "q": 1.602e-19,
+    "g0": 9.81,
+    "amu": 1.661e-27
+  }
+}

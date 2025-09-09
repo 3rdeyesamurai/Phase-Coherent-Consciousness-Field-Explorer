@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ionic Propulsion Lab - Interactive Visualization</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+        }
+
+        .controls {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .control-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            min-width: 200px;
+        }
+
+        .control-group label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #495057;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .slider {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #007bff;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #007bff;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .value-display {
+            min-width: 60px;
+            text-align: center;
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+
+        .charts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+
+        .chart-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #495057;
+            text-align: center;
+        }
+
+        .metrics {
+            padding: 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #007bff;
+            margin: 5px 0;
+        }
+
+        .metric-label {
+            font-size: 0.9em;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status {
+            text-align: center;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        .loading {
+            color: #856404;
+            background: #fff3cd;
+        }
+
+        .ready {
+            color: #155724;
+            background: #d4edda;
+        }
+
+        .error {
+            color: #721c24;
+            background: #f8d7da;
+        }
+
+        @media (max-width: 768px) {
+            .charts {
+                grid-template-columns: 1fr;
+            }
+
+            .control-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .control-group {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Ionic Propulsion Lab</h1>
+            <p>Interactive Parametric Analysis of Ion Engines & Hall Thrusters</p>
+        </div>
+
+        <div class="controls">
+            <div class="control-row">
+                <div class="control-group">
+                    <label>CSV File:</label>
+                    <input type="text" id="csvPath" value="output/ion_sweep.csv" style="padding: 5px; border-radius: 3px; border: 1px solid #ccc;">
+                </div>
+                <div class="control-group">
+                    <label>Thruster Type:</label>
+                    <select id="thrusterType" style="padding: 5px; border-radius: 3px; border: 1px solid #ccc;">
+                        <option value="ion">Ion Engine</option>
+                        <option value="hall">Hall Thruster</option>
+                    </select>
+                </div>
+                <div class="button-group">
+                    <button class="btn btn-primary" id="loadBtn">Load Data</button>
+                    <button class="btn btn-secondary" id="resetBtn">Reset View</button>
+                </div>
+            </div>
+
+            <div class="control-row">
+                <div class="control-group">
+                    <label>Gas Selection:</label>
+                    <select id="gasFilter" multiple style="padding: 5px; border-radius: 3px; border: 1px solid #ccc; min-height: 100px;">
+                        <option value="Xenon" selected>Xenon</option>
+                        <option value="Iodine" selected>Iodine</option>
+                        <option value="Krypton" selected>Krypton</option>
+                        <option value="Argon" selected>Argon</option>
+                        <option value="WaterOH" selected>WaterOH</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label>Beam Current (A) - Ion Only:</label>
+                    <div class="slider-container">
+                        <input type="range" class="slider" id="ibSlider" min="0.1" max="5.0" step="0.1" value="2.0">
+                        <span class="value-display" id="ibValue">2.0</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Mass Flow (mg/s) - Hall Only:</label>
+                    <div class="slider-container">
+                        <input type="range" class="slider" id="mdotSlider" min="1" max="10" step="0.5" value="5.0">
+                        <span class="value-display" id="mdotValue">5.0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-row">
+                <div class="control-group">
+                    <label>Grid Transparency (τ_open):</label>
+                    <div class="slider-container">
+                        <input type="range" class="slider" id="tauOpenSlider" min="0.5" max="0.9" step="0.05" value="0.7">
+                        <span class="value-display" id="tauOpenValue">0.7</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Transmission (τ_trans):</label>
+                    <div class="slider-container">
+                        <input type="range" class="slider" id="tauTransSlider" min="0.8" max="1.0" step="0.01" value="0.95">
+                        <span class="value-display" id="tauTransValue">0.95</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Divergence Angle (°):</label>
+                    <div class="slider-container">
+                        <input type="range" class="slider" id="divergenceSlider" min="1" max="45" step="1" value="5">
+                        <span class="value-display" id="divergenceValue">5</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="status" class="status loading">Ready to load data...</div>
+
+        <div class="charts">
+            <div class="chart-container">
+                <div class="chart-title">Thrust vs Voltage</div>
+                <svg id="thrustChart" width="100%" height="400"></svg>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">Isp vs Voltage</div>
+                <svg id="ispChart" width="100%" height="400"></svg>
+            </div>
+        </div>
+
+        <div class="charts">
+            <div class="chart-container">
+                <div class="chart-title">Power vs Thrust</div>
+                <svg id="powerChart" width="100%" height="400"></svg>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">Efficiency Analysis</div>
+                <svg id="efficiencyChart" width="100%" height="400"></svg>
+            </div>
+        </div>
+
+        <div class="metrics">
+            <div class="metrics-grid" id="metricsGrid">
+                <div class="metric-card">
+                    <div class="metric-value" id="maxThrust">-</div>
+                    <div class="metric-label">Max Thrust (mN)</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="maxIsp">-</div>
+                    <div class="metric-label">Max Isp (s)</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="maxPower">-</div>
+                    <div class="metric-label">Max Power (W)</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="dataPoints">-</div>
+                    <div class="metric-label">Data Points</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class PropulsionVisualizer {
+            constructor() {
+                this.data = [];
+                this.filteredData = [];
+                this.margin = {top: 20, right: 30, bottom: 40, left: 60};
+                this.width = 600 - this.margin.left - this.margin.right;
+                this.height = 400 - this.margin.top - this.margin.bottom;
+
+                this.initEventListeners();
+                this.initCharts();
+            }
+
+            initEventListeners() {
+                document.getElementById('loadBtn').addEventListener('click', () => this.loadData());
+                document.getElementById('resetBtn').addEventListener('click', () => this.resetView());
+                document.getElementById('thrusterType').addEventListener('change', () => this.updateUI());
+                document.getElementById('gasFilter').addEventListener('change', () => this.updateFilters());
+
+                // Slider event listeners
+                ['ibSlider', 'mdotSlider', 'tauOpenSlider', 'tauTransSlider', 'divergenceSlider'].forEach(id => {
+                    const slider = document.getElementById(id);
+                    const valueDisplay = document.getElementById(id.replace('Slider', 'Value'));
+                    slider.addEventListener('input', (e) => {
+                        valueDisplay.textContent = e.target.value;
+                        this.updateFilters();
+                    });
+                });
+            }
+
+            updateUI() {
+                const thrusterType = document.getElementById('thrusterType').value;
+                const ibControls = document.querySelector('.control-group:has(#ibSlider)');
+                const mdotControls = document.querySelector('.control-group:has(#mdotSlider)');
+
+                if (thrusterType === 'ion') {
+                    ibControls.style.display = 'block';
+                    mdotControls.style.display = 'none';
+                    document.getElementById('csvPath').value = 'output/ion_sweep.csv';
+                } else {
+                    ibControls.style.display = 'none';
+                    mdotControls.style.display = 'block';
+                    document.getElementById('csvPath').value = 'output/hall_sweep.csv';
+                }
+            }
+
+            async loadData() {
+                const csvPath = document.getElementById('csvPath').value;
+                const status = document.getElementById('status');
+
+                try {
+                    status.className = 'status loading';
+                    status.textContent = 'Loading data...';
+
+                    const response = await fetch(csvPath);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const csvText = await response.text();
+                    this.data = d3.csvParse(csvText, d => ({
+                        Va: +d.Va || 0,
+                        Vd: +d.Vd || 0,
+                        Ib: +d.Ib || 0,
+                        Ib_eff: +d.Ib_eff || 0,
+                        mdot: +d.mdot || 0,
+                        v_e0: +d.v_e0 || 0,
+                        eta_div: +d.eta_div || 0,
+                        T_axial: +d.T_axial || 0,
+                        Isp_ax: +d.Isp_ax || 0,
+                        P_elec: +d.P_elec || 0,
+                        gas: d.gas || '',
+                        thruster_type: d.thruster_type || ''
+                    }));
+
+                    status.className = 'status ready';
+                    status.textContent = `Loaded ${this.data.length} data points successfully!`;
+                    this.updateFilters();
+
+                } catch (error) {
+                    status.className = 'status error';
+                    status.textContent = `Error loading data: ${error.message}`;
+                    console.error('Error loading CSV:', error);
+                }
+            }
+
+            updateFilters() {
+                if (!this.data.length) return;
+
+                const selectedGases = Array.from(document.getElementById('gasFilter').selectedOptions)
+                    .map(option => option.value);
+
+                const ibValue = +document.getElementById('ibSlider').value;
+                const mdotValue = +document.getElementById('mdotSlider').value * 1e-6; // Convert mg/s to kg/s
+                const tauOpen = +document.getElementById('tauOpenSlider').value;
+                const tauTrans = +document.getElementById('tauTransSlider').value;
+                const divergence = +document.getElementById('divergenceSlider').value;
+
+                this.filteredData = this.data.filter(d => {
+                    if (!selectedGases.includes(d.gas)) return false;
+
+                    // Apply parameter filters (simplified - in real app would recalculate)
+                    const ibMatch = Math.abs(d.Ib - ibValue) < ibValue * 0.1;
+                    const mdotMatch = Math.abs(d.mdot - mdotValue) < mdotValue * 0.1;
+
+                    return ibMatch || mdotMatch;
+                });
+
+                this.updateCharts();
+                this.updateMetrics();
+            }
+
+            initCharts() {
+                // Initialize SVG elements
+                this.thrustSvg = d3.select('#thrustChart')
+                    .attr('width', this.width + this.margin.left + this.margin.right)
+                    .attr('height', this.height + this.margin.top + this.margin.bottom)
+                    .append('g')
+                    .attr('transform', `translate(${this.margin.left},${this.margin.top})`);
+
+                this.ispSvg = d3.select('#ispChart')
+                    .attr('width', this.width + this.margin.left + this.margin.right)
+                    .attr('height', this.height + this.margin.top + this.margin.bottom)
+                    .append('g')
+                    .attr('transform', `translate(${this.margin.left},${this.margin.top})`);
+
+                this.powerSvg = d3.select('#powerChart')
+                    .attr('width', this.width + this.margin.left + this.margin.right)
+                    .attr('height', this.height + this.margin.top + this.margin.bottom)
+                    .append('g')
+                    .attr('transform', `translate(${this.margin.left},${this.margin.top})`);
+
+                this.efficiencySvg = d3.select('#efficiencyChart')
+                    .attr('width', this.width + this.margin.left + this.margin.right)
+                    .attr('height', this.height + this.margin.top + this.margin.bottom)
+                    .append('g')
+                    .attr('transform', `translate(${this.margin.left},${this.margin.top})`);
+            }
+
+            updateCharts() {
+                if (!this.filteredData.length) return;
+
+                const thrusterType = document.getElementById('thrusterType').value;
+                const voltageKey = thrusterType === 'ion' ? 'Va' : 'Vd';
+
+                // Color scale for gases
+                const colorScale = d3.scaleOrdinal()
+                    .domain(['Xenon', 'Iodine', 'Krypton', 'Argon', 'WaterOH'])
+                    .range(['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd']);
+
+                // Thrust vs Voltage
+                this.updateScatterPlot(this.thrustSvg, this.filteredData, voltageKey, 'T_axial',
+                    `${thrusterType === 'ion' ? 'Acceleration' : 'Discharge'} Voltage (V)`,
+                    'Axial Thrust (N)', colorScale, d => d.T_axial);
+
+                // Isp vs Voltage
+                this.updateScatterPlot(this.ispSvg, this.filteredData, voltageKey, 'Isp_ax',
+                    `${thrusterType === 'ion' ? 'Acceleration' : 'Discharge'} Voltage (V)`,
+                    'Axial Isp (s)', colorScale, d => d.Isp_ax);
+
+                // Power vs Thrust
+                this.updateScatterPlot(this.powerSvg, this.filteredData, 'T_axial', 'P_elec',
+                    'Axial Thrust (N)', 'Electrical Power (W)', colorScale, d => d.P_elec);
+
+                // Efficiency analysis (Isp vs Thrust)
+                this.updateScatterPlot(this.efficiencySvg, this.filteredData, 'T_axial', 'Isp_ax',
+                    'Axial Thrust (N)', 'Axial Isp (s)', colorScale, d => d.Isp_ax);
+            }
+
+            updateScatterPlot(svg, data, xKey, yKey, xLabel, yLabel, colorScale, yAccessor) {
+                // Clear previous content
+                svg.selectAll('*').remove();
+
+                // Scales
+                const xScale = d3.scaleLinear()
+                    .domain(d3.extent(data, d => d[xKey]))
+                    .range([0, this.width]);
+
+                const yScale = d3.scaleLinear()
+                    .domain([0, d3.max(data, yAccessor) * 1.1])
+                    .range([this.height, 0]);
+
+                // Axes
+                svg.append('g')
+                    .attr('transform', `translate(0,${this.height})`)
+                    .call(d3.axisBottom(xScale));
+
+                svg.append('g')
+                    .call(d3.axisLeft(yScale));
+
+                // Labels
+                svg.append('text')
+                    .attr('transform', `translate(${this.width/2}, ${this.height + this.margin.bottom - 5})`)
+                    .style('text-anchor', 'middle')
+                    .text(xLabel);
+
+                svg.append('text')
+                    .attr('transform', 'rotate(-90)')
+                    .attr('y', -this.margin.left + 15)
+                    .attr('x', -this.height/2)
+                    .style('text-anchor', 'middle')
+                    .text(yLabel);
+
+                // Group data by gas
+                const gasGroups = d3.group(data, d => d.gas);
+
+                // Plot points
+                gasGroups.forEach((gasData, gas) => {
+                    svg.selectAll(`.point-${gas}`)
+                        .data(gasData)
+                        .enter()
+                        .append('circle')
+                        .attr('class', `point-${gas}`)
+                        .attr('cx', d => xScale(d[xKey]))
+                        .attr('cy', d => yScale(yAccessor(d)))
+                        .attr('r', 3)
+                        .attr('fill', colorScale(gas))
+                        .attr('opacity', 0.7)
+                        .append('title')
+                        .text(d => `${gas}: ${xLabel.split(' ')[0]} ${d[xKey].toFixed(0)}, ${yLabel.split(' ')[0]} ${yAccessor(d).toFixed(2)}`);
+                });
+
+                // Legend
+                const legend = svg.selectAll('.legend')
+                    .data(colorScale.domain())
+                    .enter()
+                    .append('g')
+                    .attr('class', 'legend')
+                    .attr('transform', (d, i) => `translate(0,${i * 20})`);
+
+                legend.append('circle')
+                    .attr('r', 5)
+                    .attr('fill', colorScale);
+
+                legend.append('text')
+                    .attr('x', 15)
+                    .attr('y', 5)
+                    .text(d => d);
+            }
+
+            updateMetrics() {
+                if (!this.filteredData.length) {
+                    document.getElementById('maxThrust').textContent = '-';
+                    document.getElementById('maxIsp').textContent = '-';
+                    document.getElementById('maxPower').textContent = '-';
+                    document.getElementById('dataPoints').textContent = '-';
+                    return;
+                }
+
+                const maxThrust = d3.max(this.filteredData, d => d.T_axial) * 1000; // Convert to mN
+                const maxIsp = d3.max(this.filteredData, d => d.Isp_ax);
+                const maxPower = d3.max(this.filteredData, d => d.P_elec);
+
+                document.getElementById('maxThrust').textContent = maxThrust.toFixed(1);
+                document.getElementById('maxIsp').textContent = maxIsp.toFixed(0);
+                document.getElementById('maxPower').textContent = maxPower.toFixed(0);
+                document.getElementById('dataPoints').textContent = this.filteredData.length;
+            }
+
+            resetView() {
+                // Reset sliders to default values
+                document.getElementById('ibSlider').value = 2.0;
+                document.getElementById('ibValue').textContent = '2.0';
+                document.getElementById('mdotSlider').value = 5.0;
+                document.getElementById('mdotValue').textContent = '5.0';
+                document.getElementById('tauOpenSlider').value = 0.7;
+                document.getElementById('tauOpenValue').textContent = '0.7';
+                document.getElementById('tauTransSlider').value = 0.95;
+                document.getElementById('tauTransValue').textContent = '0.95';
+                document.getElementById('divergenceSlider').value = 5;
+                document.getElementById('divergenceValue').textContent = '5';
+
+                // Reset gas selection
+                const gasOptions = document.getElementById('gasFilter').options;
+                for (let i = 0; i < gasOptions.length; i++) {
+                    gasOptions[i].selected = true;
+                }
+
+                this.updateFilters();
+            }
+        }
+
+        // Initialize the visualizer when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            window.visualizer = new PropulsionVisualizer();
+        });
+    </script>
+</body>
+</html>
