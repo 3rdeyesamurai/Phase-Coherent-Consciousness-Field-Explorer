@@ -42,6 +42,15 @@ class PCCFE:
         # Data for simulations
         self.eeg_data = None
         self.rng_entropy = []
+        self.real_time_eeg = []
+        self.real_time_eeg_enabled = False
+
+        # UI layout constants
+        self.UI_PANEL_WIDTH = 280
+        self.FIGURE_X = self.UI_PANEL_WIDTH + 20
+        self.FIGURE_Y = 400  # Moved down to avoid overlapping UI elements
+        self.FIGURE_WIDTH = 800
+        self.FIGURE_HEIGHT = 600
 
         # UI elements
         self.buttons = {}
@@ -69,7 +78,8 @@ class PCCFE:
             'multi': {'rect': pygame.Rect(230, 10, 100, 50), 'text': 'Multi-Domain', 'action': lambda: setattr(self, 'mode', 'multi')},
             'biofield': {'rect': pygame.Rect(340, 10, 100, 50), 'text': 'Biofield', 'action': lambda: setattr(self, 'mode', 'biofield')},
             'load_eeg': {'rect': pygame.Rect(10, 250, 100, 50), 'text': 'Load EEG', 'action': self.load_eeg_data},
-            'export': {'rect': pygame.Rect(120, 250, 100, 50), 'text': 'Export', 'action': self.export_data}
+            'export': {'rect': pygame.Rect(120, 250, 100, 50), 'text': 'Export', 'action': self.export_data},
+            'realtime_eeg': {'rect': pygame.Rect(230, 250, 120, 50), 'text': 'Real-time EEG', 'action': self.toggle_realtime_eeg}
         }
 
         # Sliders: dict of {'rect': pygame.Rect, 'min': float, 'max': float, 'value': float, 'label': str}
@@ -234,9 +244,18 @@ class PCCFE:
     def update_biofield_scanner(self):
         """Update biofield scanner mode."""
         self.ax_bio.clear()
-        if self.eeg_data is not None:
+        if self.real_time_eeg_enabled and self.real_time_eeg:
+            # Plot real-time EEG data
+            data = np.array(self.real_time_eeg)
+            self.ax_bio.plot(data[:, 0], data[:, 1], 'b-', linewidth=1)
+            self.ax_bio.set_title('Real-time EEG Signal')
+            self.ax_bio.set_xlabel('Time (s)')
+            self.ax_bio.set_ylabel('Amplitude')
+        elif self.eeg_data is not None:
             self.ax_bio.plot(self.eeg_data[:, 0], self.eeg_data[:, 1])
-        self.ax_bio.set_title('EEG Coherence Heatmap')
+            self.ax_bio.set_title('EEG Coherence Heatmap')
+        else:
+            self.ax_bio.set_title('EEG Scanner - Load data or enable real-time')
 
     def simulate_rng(self):
         """Simulate RNG modulated by coherence."""
@@ -266,6 +285,34 @@ class PCCFE:
             self.fig_multi.savefig('multi_domain.png')
         elif self.mode == 'biofield':
             self.fig_bio.savefig('biofield_scanner.png')
+
+    def toggle_realtime_eeg(self):
+        """Toggle real-time EEG reading."""
+        self.real_time_eeg_enabled = not self.real_time_eeg_enabled
+        if self.real_time_eeg_enabled:
+            self.real_time_eeg = []
+            # Start real-time EEG thread
+            self.eeg_thread = threading.Thread(target=self.generate_realtime_eeg)
+            self.eeg_thread.daemon = True
+            self.eeg_thread.start()
+
+    def generate_realtime_eeg(self):
+        """Generate simulated real-time EEG data."""
+        start_time = time.time()
+        while self.real_time_eeg_enabled:
+            current_time = time.time() - start_time
+            # Simulate EEG signal with multiple frequency components
+            signal = (np.sin(2 * PI * 10 * current_time) +  # Alpha
+                     0.5 * np.sin(2 * PI * 20 * current_time) +  # Beta
+                     0.3 * np.sin(2 * PI * 5 * current_time) +  # Theta
+                     0.2 * np.sin(2 * PI * 2 * current_time))  # Delta
+            # Add some noise
+            signal += 0.1 * np.random.normal()
+            self.real_time_eeg.append([current_time, signal])
+            # Keep only last 1000 points
+            if len(self.real_time_eeg) > 1000:
+                self.real_time_eeg.pop(0)
+            time.sleep(0.01)  # 100 Hz sampling rate
 
     def run(self):
         # Start RNG simulation thread
@@ -304,19 +351,19 @@ class PCCFE:
             if self.mode == 'brain':
                 self.update_brain_model()
                 surf = self.fig_to_surface(self.fig_brain)
-                self.screen.blit(surf, (300, 100))
+                self.screen.blit(surf, (self.FIGURE_X, self.FIGURE_Y))
             elif self.mode == 'quantum':
                 self.update_quantum_simulation()
                 surf = self.fig_to_surface(self.fig_quantum)
-                self.screen.blit(surf, (300, 100))
+                self.screen.blit(surf, (self.FIGURE_X, self.FIGURE_Y))
             elif self.mode == 'multi':
                 self.update_multi_domain()
                 surf = self.fig_to_surface(self.fig_multi)
-                self.screen.blit(surf, (300, 100))
+                self.screen.blit(surf, (self.FIGURE_X, self.FIGURE_Y))
             elif self.mode == 'biofield':
                 self.update_biofield_scanner()
                 surf = self.fig_to_surface(self.fig_bio)
-                self.screen.blit(surf, (300, 100))
+                self.screen.blit(surf, (self.FIGURE_X, self.FIGURE_Y))
 
             # Display metrics
             entropy_text = self.font.render(f'Entropy: {self.entropy_phase_loss([self.phase_shift]):.3f}', True, (255, 255, 255))
