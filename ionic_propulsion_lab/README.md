@@ -19,6 +19,25 @@ An advanced parametric analysis tool for ion engines and Hall thrusters with sop
 2. **Manual:** `pip install numpy pandas matplotlib`
 3. **Launch:** `python launcher.py` or `python gui_app.py`
 
+### Option E: GUI Application (Recommended)
+1. **Launch GUI:** `python gui_app.py`
+2. **Features:**
+   - Real-time parameter adjustment with sliders
+   - Interactive plots and calculations
+   - Custom parametric sweep ranges
+   - User-selectable input/output folders
+   - Export results to JSON/CSV
+   - Professional real-time results display
+   - Enhanced parametric sweep with custom output locations
+3. **GUI Controls:**
+   - **Thruster Type:** Switch between Ion Engine and Hall Thruster
+   - **Gas Selection:** Choose from Xenon, Iodine, Krypton, Argon, WaterOH
+   - **Parameter Sliders:** Real-time adjustment of all physics parameters
+   - **Folder Selection:** Browse and select custom input/output directories
+   - **Sweep Controls:** Set custom ranges for parametric sweeps
+   - **Interactive Plots:** Live visualization of performance curves
+   - **Real-Time Results:** Professional formatted output with physics interpretations
+
 ### Option D: Command Line Tools
 1. **Analysis:** `python run_sweep.py`
 2. **Web Interface:** `python -m http.server 8000` → `http://localhost:8000/viz/index.html`
@@ -71,7 +90,13 @@ An advanced parametric analysis tool for ion engines and Hall thrusters with sop
 
 ## Configuration
 
-Edit `config.json` to customize:
+### GUI Folder Selection
+The GUI application allows you to select custom input and output folders:
+- **Input Folder**: Location of configuration files (defaults to current directory)
+- **Output Folder**: Where results, CSV files, and plots are saved (defaults to `output/`)
+
+### Configuration File
+Edit `config.json` to customize physics parameters:
 
 ```json
 {

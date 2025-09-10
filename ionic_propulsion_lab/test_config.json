@@ -1,0 +1,41 @@
+{
+  "gases": ["Xenon"],
+  "gas_masses": {
+    "Xenon": 131.3
+  },
+  "ion_engine": {
+    "Va_range": [1000, 3000],
+    "Ib_range": [1.0, 3.0],
+    "Va_steps": 10,
+    "Ib_steps": 8,
+    "geometry": {
+      "A_grid": 0.01,
+      "d": 0.002,
+      "tau_geom": 0.7
+    },
+    "losses": {
+      "tau_trans": 0.95
+    },
+    "divergence": {
+      "model": "cos",
+      "sigma_deg": 5.0
+    }
+  },
+  "hall_thruster": {
+    "Vd_range": [500, 1000],
+    "mdot_range": [2e-6, 5e-6],
+    "Vd_steps": 10,
+    "mdot_steps": 8,
+    "eta_acc": 0.6,
+    "tau_prop": 0.85,
+    "divergence": {
+      "model": "cos",
+      "param_deg": 30.0
+    }
+  },
+  "constants": {
+    "q": 1.602e-19,
+    "g0": 9.81,
+    "amu": 1.661e-27
+  }
+}

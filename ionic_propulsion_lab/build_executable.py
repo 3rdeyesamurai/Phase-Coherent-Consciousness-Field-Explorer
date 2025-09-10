@@ -96,7 +96,6 @@ a = Analysis(
     binaries=[],
     datas=[
         (os.path.join(current_dir, 'config.json'), '.'),
-        (os.path.join(current_dir, 'viz'), 'viz'),
         (os.path.join(current_dir, 'README.md'), '.'),
         (os.path.join(current_dir, 'USER_GUIDE.md'), '.'),
         (os.path.join(current_dir, 'INSTALL_GUIDE.md'), '.'),

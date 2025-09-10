@@ -212,6 +212,14 @@ class PropulsionCalculator:
 
         return results
 
+    def update_config(self, new_config):
+        """Update calculator configuration dynamically (for GUI integration)"""
+        self.config = new_config
+        self.constants = self.config['constants']
+        self.gases = self.config['gases']
+        self.gas_masses = self.config['gas_masses']
+        print("✅ Calculator configuration updated")
+
 if __name__ == "__main__":
     calc = PropulsionCalculator()
     print("Enhanced Ion Engine Example (Xenon, 2000V, 2A):")

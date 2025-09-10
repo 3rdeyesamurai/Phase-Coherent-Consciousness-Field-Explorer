@@ -165,8 +165,8 @@ def check_file_permissions():
 
     for file_path in test_files:
         try:
-            # Try to read the file
-            with open(file_path, 'r') as f:
+            # Try to read the file with proper encoding
+            with open(file_path, 'r', encoding='utf-8') as f:
                 f.read(1)
             print(f"✅ Can read {file_path}")
         except PermissionError:
@@ -174,6 +174,15 @@ def check_file_permissions():
             print(f"❌ Cannot read {file_path}")
         except FileNotFoundError:
             print(f"⚠️  {file_path} not found")
+        except UnicodeDecodeError:
+            # Try with different encoding if UTF-8 fails
+            try:
+                with open(file_path, 'r', encoding='latin-1') as f:
+                    f.read(1)
+                print(f"✅ Can read {file_path} (with latin-1 encoding)")
+            except Exception as e2:
+                permission_issues.append(f"Encoding error reading {file_path}: {e2}")
+                print(f"❌ Encoding error reading {file_path}: {e2}")
         except Exception as e:
             permission_issues.append(f"Error accessing {file_path}: {e}")
             print(f"❌ Error accessing {file_path}: {e}")

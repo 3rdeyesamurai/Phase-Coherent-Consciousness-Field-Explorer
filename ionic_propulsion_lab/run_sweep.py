@@ -1,6 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import json
 from ion_hall_parametric import PropulsionCalculator
 import os
 
@@ -143,6 +144,23 @@ def run_full_sweep():
         print(f"❌ Failed to initialize calculator: {e}")
         return False
 
+    # Check for custom output folder
+    output_dir = os.environ.get('IONIC_OUTPUT_FOLDER', 'output')
+    print(f"📁 Output folder: {output_dir}")
+
+    # Check for dynamic configuration from GUI
+    dynamic_config = os.environ.get('IONIC_SWEEP_CONFIG')
+    if dynamic_config and os.path.exists(dynamic_config):
+        print(f"📋 Using dynamic configuration: {dynamic_config}")
+        try:
+            with open(dynamic_config, 'r') as f:
+                config = json.load(f)
+            # Update calculator with dynamic config
+            calc.update_config(config)
+            print("✅ Dynamic configuration applied")
+        except Exception as e:
+            print(f"⚠️  Could not load dynamic config: {e}")
+
     success_count = 0
 
     print("\n⚡ Running ion engine parametric sweep...")
@@ -150,8 +168,9 @@ def run_full_sweep():
         ion_results = calc.parametric_sweep_ion()
         print(f"📊 Generated {len(ion_results)} ion engine data points")
 
-        if save_to_csv(ion_results, 'output/ion_sweep.csv'):
-            create_plots(ion_results, 'ion')
+        ion_csv_path = os.path.join(output_dir, 'ion_sweep.csv')
+        if save_to_csv(ion_results, ion_csv_path):
+            create_plots(ion_results, 'ion', output_dir)
             success_count += 1
     except Exception as e:
         print(f"❌ Ion engine sweep failed: {e}")
@@ -161,8 +180,9 @@ def run_full_sweep():
         hall_results = calc.parametric_sweep_hall()
         print(f"📊 Generated {len(hall_results)} Hall thruster data points")
 
-        if save_to_csv(hall_results, 'output/hall_sweep.csv'):
-            create_plots(hall_results, 'hall')
+        hall_csv_path = os.path.join(output_dir, 'hall_sweep.csv')
+        if save_to_csv(hall_results, hall_csv_path):
+            create_plots(hall_results, 'hall', output_dir)
             success_count += 1
     except Exception as e:
         print(f"❌ Hall thruster sweep failed: {e}")
@@ -172,7 +192,7 @@ def run_full_sweep():
         return False
 
     print(f"\n🎉 Sweep complete! ({success_count}/2 successful)")
-    print("📁 Results saved to output/ folder")
+    print(f"📁 Results saved to {output_dir} folder")
     print("📊 Generated plots and CSV files ready for analysis")
 
     # Print some summary statistics

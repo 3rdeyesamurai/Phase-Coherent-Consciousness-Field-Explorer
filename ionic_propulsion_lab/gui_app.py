@@ -22,7 +22,7 @@ import os
 import sys
 import subprocess
 import threading
-import webbrowser
+
 from pathlib import Path
 
 class IonicPropulsionGUI:
@@ -37,23 +37,42 @@ class IonicPropulsionGUI:
         self.current_results = {}
         self.config = self.load_config()
 
+        # Folder paths
+        self.input_folder = tk.StringVar(value=os.getcwd())
+        self.output_folder = tk.StringVar(value=os.path.join(os.getcwd(), 'output'))
+
         # Status bar (create early for error handling)
         self.status_var = tk.StringVar()
         self.status_var.set("Initializing - Enhanced Ionic Propulsion Analysis Tool")
         status_bar = ttk.Label(self.root, textvariable=self.status_var, relief=tk.SUNKEN)
         status_bar.pack(side=tk.BOTTOM, fill=tk.X)
 
-        # Create GUI components
+        # Parametric sweep configuration variables
+        self.sweep_config = {
+            'ion_engine': {
+                'Va_steps': tk.IntVar(value=20),
+                'Ib_steps': tk.IntVar(value=15),
+                'Va_min': tk.DoubleVar(value=500),
+                'Va_max': tk.DoubleVar(value=4000),
+                'Ib_min': tk.DoubleVar(value=0.1),
+                'Ib_max': tk.DoubleVar(value=5.0)
+            },
+            'hall_thruster': {
+                'Vd_steps': tk.IntVar(value=20),
+                'mdot_steps': tk.IntVar(value=15),
+                'Vd_min': tk.DoubleVar(value=200),
+                'Vd_max': tk.DoubleVar(value=800),
+                'mdot_min': tk.DoubleVar(value=1.0),
+                'mdot_max': tk.DoubleVar(value=10.0)
+            }
+        }
+
+        # Initialize the GUI components
         self.create_menu()
         self.create_main_layout()
         self.create_parameter_controls()
         self.create_results_display()
-
-        # Initialize calculator
         self.initialize_calculator()
-
-        # Update status
-        self.status_var.set("Ready - Enhanced Ionic Propulsion Analysis Tool")
 
     def load_config(self):
         """Load configuration file with proper path resolution for executables"""
@@ -115,7 +134,6 @@ class IonicPropulsionGUI:
         tools_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Tools", menu=tools_menu)
         tools_menu.add_command(label="Run Diagnostics", command=self.run_diagnostics)
-        tools_menu.add_command(label="Open Web Interface", command=self.open_web_interface)
         tools_menu.add_command(label="View Documentation", command=self.view_documentation)
 
         # Help menu
@@ -165,11 +183,32 @@ class IonicPropulsionGUI:
         gas_combo.pack(fill=tk.X)
         gas_combo.bind("<<ComboboxSelected>>", self.update_calculations)
 
+        # Folder selection
+        folder_frame = ttk.LabelFrame(self.left_panel, text="📁 Input/Output Folders", padding=10)
+        folder_frame.pack(fill=tk.X, pady=(0, 10))
+
+        # Input folder
+        input_frame = ttk.Frame(folder_frame)
+        input_frame.pack(fill=tk.X, pady=(0, 5))
+        ttk.Label(input_frame, text="Input Folder:").pack(side=tk.LEFT)
+        ttk.Entry(input_frame, textvariable=self.input_folder, width=30).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(5, 0))
+        ttk.Button(input_frame, text="Browse", command=self.select_input_folder).pack(side=tk.RIGHT)
+
+        # Output folder
+        output_frame = ttk.Frame(folder_frame)
+        output_frame.pack(fill=tk.X, pady=(0, 5))
+        ttk.Label(output_frame, text="Output Folder:").pack(side=tk.LEFT)
+        ttk.Entry(output_frame, textvariable=self.output_folder, width=30).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(5, 0))
+        ttk.Button(output_frame, text="Browse", command=self.select_output_folder).pack(side=tk.RIGHT)
+
         # Ion Engine parameters
         self.ion_frame = ttk.LabelFrame(self.left_panel, text="⚡ Ion Engine Parameters", padding=10)
 
         # Hall Thruster parameters
         self.hall_frame = ttk.LabelFrame(self.left_panel, text="🔄 Hall Thruster Parameters", padding=10)
+
+        # Sweep parameter controls
+        self.create_sweep_controls()
 
         # Control buttons
         button_frame = ttk.Frame(self.left_panel)
@@ -178,11 +217,80 @@ class IonicPropulsionGUI:
         ttk.Button(button_frame, text="🔄 Update Calculations",
                   command=self.update_calculations).pack(fill=tk.X, pady=(0, 5))
         ttk.Button(button_frame, text="📊 Run Parametric Sweep",
-                  command=self.run_parametric_sweep).pack(fill=tk.X, pady=(0, 5))
-        ttk.Button(button_frame, text="🌐 Open Web Interface",
-                  command=self.open_web_interface).pack(fill=tk.X)
+                  command=self.run_parametric_sweep).pack(fill=tk.X)
 
         self.update_parameter_controls()
+
+    def create_sweep_controls(self):
+        """Create parametric sweep parameter controls"""
+        # Sweep parameters frame
+        self.sweep_frame = ttk.LabelFrame(self.left_panel, text="📊 Parametric Sweep Parameters", padding=10)
+        self.sweep_frame.pack(fill=tk.X, pady=(0, 10))
+
+        # Ion Engine sweep controls
+        ion_sweep_frame = ttk.LabelFrame(self.sweep_frame, text="Ion Engine Sweep Ranges", padding=5)
+        ion_sweep_frame.pack(fill=tk.X, pady=(0, 10))
+
+        # Va range controls
+        ttk.Label(ion_sweep_frame, text="Va Range (V):").grid(row=0, column=0, sticky=tk.W, pady=2)
+        ttk.Label(ion_sweep_frame, text="Min:").grid(row=1, column=0, sticky=tk.W)
+        ttk.Label(ion_sweep_frame, text="Max:").grid(row=2, column=0, sticky=tk.W)
+        ttk.Label(ion_sweep_frame, text="Steps:").grid(row=3, column=0, sticky=tk.W)
+
+        va_min_entry = ttk.Entry(ion_sweep_frame, textvariable=self.sweep_config['ion_engine']['Va_min'], width=8)
+        va_min_entry.grid(row=1, column=1, padx=5)
+        va_max_entry = ttk.Entry(ion_sweep_frame, textvariable=self.sweep_config['ion_engine']['Va_max'], width=8)
+        va_max_entry.grid(row=2, column=1, padx=5)
+        va_steps_entry = ttk.Entry(ion_sweep_frame, textvariable=self.sweep_config['ion_engine']['Va_steps'], width=8)
+        va_steps_entry.grid(row=3, column=1, padx=5)
+
+        # Ib range controls
+        ttk.Label(ion_sweep_frame, text="Ib Range (A):").grid(row=0, column=2, sticky=tk.W, pady=2)
+        ttk.Label(ion_sweep_frame, text="Min:").grid(row=1, column=2, sticky=tk.W)
+        ttk.Label(ion_sweep_frame, text="Max:").grid(row=2, column=2, sticky=tk.W)
+        ttk.Label(ion_sweep_frame, text="Steps:").grid(row=3, column=2, sticky=tk.W)
+
+        ib_min_entry = ttk.Entry(ion_sweep_frame, textvariable=self.sweep_config['ion_engine']['Ib_min'], width=8)
+        ib_min_entry.grid(row=1, column=3, padx=5)
+        ib_max_entry = ttk.Entry(ion_sweep_frame, textvariable=self.sweep_config['ion_engine']['Ib_max'], width=8)
+        ib_max_entry.grid(row=2, column=3, padx=5)
+        ib_steps_entry = ttk.Entry(ion_sweep_frame, textvariable=self.sweep_config['ion_engine']['Ib_steps'], width=8)
+        ib_steps_entry.grid(row=3, column=3, padx=5)
+
+        # Hall Thruster sweep controls
+        hall_sweep_frame = ttk.LabelFrame(self.sweep_frame, text="Hall Thruster Sweep Ranges", padding=5)
+        hall_sweep_frame.pack(fill=tk.X, pady=(0, 10))
+
+        # Vd range controls
+        ttk.Label(hall_sweep_frame, text="Vd Range (V):").grid(row=0, column=0, sticky=tk.W, pady=2)
+        ttk.Label(hall_sweep_frame, text="Min:").grid(row=1, column=0, sticky=tk.W)
+        ttk.Label(hall_sweep_frame, text="Max:").grid(row=2, column=0, sticky=tk.W)
+        ttk.Label(hall_sweep_frame, text="Steps:").grid(row=3, column=0, sticky=tk.W)
+
+        vd_min_entry = ttk.Entry(hall_sweep_frame, textvariable=self.sweep_config['hall_thruster']['Vd_min'], width=8)
+        vd_min_entry.grid(row=1, column=1, padx=5)
+        vd_max_entry = ttk.Entry(hall_sweep_frame, textvariable=self.sweep_config['hall_thruster']['Vd_max'], width=8)
+        vd_max_entry.grid(row=2, column=1, padx=5)
+        vd_steps_entry = ttk.Entry(hall_sweep_frame, textvariable=self.sweep_config['hall_thruster']['Vd_steps'], width=8)
+        vd_steps_entry.grid(row=3, column=1, padx=5)
+
+        # mdot range controls
+        ttk.Label(hall_sweep_frame, text="ṁ Range (mg/s):").grid(row=0, column=2, sticky=tk.W, pady=2)
+        ttk.Label(hall_sweep_frame, text="Min:").grid(row=1, column=2, sticky=tk.W)
+        ttk.Label(hall_sweep_frame, text="Max:").grid(row=2, column=2, sticky=tk.W)
+        ttk.Label(hall_sweep_frame, text="Steps:").grid(row=3, column=2, sticky=tk.W)
+
+        mdot_min_entry = ttk.Entry(hall_sweep_frame, textvariable=self.sweep_config['hall_thruster']['mdot_min'], width=8)
+        mdot_min_entry.grid(row=1, column=3, padx=5)
+        mdot_max_entry = ttk.Entry(hall_sweep_frame, textvariable=self.sweep_config['hall_thruster']['mdot_max'], width=8)
+        mdot_max_entry.grid(row=2, column=3, padx=5)
+        mdot_steps_entry = ttk.Entry(hall_sweep_frame, textvariable=self.sweep_config['hall_thruster']['mdot_steps'], width=8)
+        mdot_steps_entry.grid(row=3, column=3, padx=5)
+
+        # Add validation for numeric inputs
+        for entry in [va_min_entry, va_max_entry, va_steps_entry, ib_min_entry, ib_max_entry, ib_steps_entry,
+                     vd_min_entry, vd_max_entry, vd_steps_entry, mdot_min_entry, mdot_max_entry, mdot_steps_entry]:
+            entry.configure(validate="key", validatecommand=(self.root.register(self.validate_numeric), "%P"))
 
     def update_parameter_controls(self):
         """Update parameter controls based on thruster type"""
@@ -821,18 +929,39 @@ EFFICIENCY ANALYSIS:
             self.canvas.draw()
 
     def run_parametric_sweep(self):
-        """Run parametric sweep in background thread"""
+        """Run parametric sweep in background thread with GUI-configured parameters"""
         def sweep_worker():
             try:
+                self.status_var.set("🔬 Preparing parametric sweep...")
+
+                # Create dynamic configuration based on GUI settings
+                sweep_config = self.create_sweep_config()
+
+                # Save temporary config file
+                temp_config_path = os.path.join(os.getcwd(), 'temp_sweep_config.json')
+                with open(temp_config_path, 'w') as f:
+                    json.dump(sweep_config, f, indent=2)
+
                 self.status_var.set("🔬 Running parametric sweep...")
+
+                # Run sweep with temporary config and output folder
+                env = os.environ.copy()
+                env['IONIC_SWEEP_CONFIG'] = temp_config_path
+                env['IONIC_OUTPUT_FOLDER'] = self.output_folder.get()
+
                 result = subprocess.run([sys.executable, 'run_sweep.py'],
-                                      capture_output=True, text=True, cwd=os.getcwd())
+                                      capture_output=True, text=True, cwd=os.path.dirname(__file__) or os.getcwd(), env=env)
+
+                # Clean up temporary config
+                if os.path.exists(temp_config_path):
+                    os.remove(temp_config_path)
 
                 if result.returncode == 0:
                     self.status_var.set("✅ Parametric sweep completed successfully!")
+                    output_folder_name = self.output_folder.get()
                     messagebox.showinfo("Success",
-                                      "Parametric sweep completed!\n\n"
-                                      "Results saved to output/ folder:\n"
+                                      f"Parametric sweep completed!\n\n"
+                                      f"Results saved to {output_folder_name} folder:\n"
                                       "• ion_sweep.csv\n"
                                       "• hall_sweep.csv\n"
                                       "• 9 professional plots")
@@ -848,6 +977,79 @@ EFFICIENCY ANALYSIS:
         # Run in background thread to avoid freezing GUI
         sweep_thread = threading.Thread(target=sweep_worker, daemon=True)
         sweep_thread.start()
+
+    def create_sweep_config(self):
+        """Create sweep configuration based on current GUI settings"""
+        thruster_type = self.thruster_type.get()
+
+        if thruster_type == "ion":
+            config = {
+                "gases": [self.gas_var.get()],
+                "gas_masses": {self.gas_var.get(): self.config['gas_masses'][self.gas_var.get()]},
+                "ion_engine": {
+                    "Va_range": [self.sweep_config['ion_engine']['Va_min'].get(),
+                               self.sweep_config['ion_engine']['Va_max'].get()],
+                    "Ib_range": [self.sweep_config['ion_engine']['Ib_min'].get(),
+                               self.sweep_config['ion_engine']['Ib_max'].get()],
+                    "Va_steps": self.sweep_config['ion_engine']['Va_steps'].get(),
+                    "Ib_steps": self.sweep_config['ion_engine']['Ib_steps'].get(),
+                    "geometry": self.config['ion_engine']['geometry'],
+                    "losses": {
+                        "tau_trans": self.tau_trans_var.get()
+                    },
+                    "divergence": {
+                        "model": self.config['ion_engine']['divergence']['model'],
+                        "sigma_deg": self.sigma_var.get()
+                    }
+                },
+                "hall_thruster": self.config['hall_thruster'],
+                "constants": self.config['constants']
+            }
+        else:
+            config = {
+                "gases": [self.gas_var.get()],
+                "gas_masses": {self.gas_var.get(): self.config['gas_masses'][self.gas_var.get()]},
+                "ion_engine": self.config['ion_engine'],
+                "hall_thruster": {
+                    "Vd_range": [self.sweep_config['hall_thruster']['Vd_min'].get(),
+                               self.sweep_config['hall_thruster']['Vd_max'].get()],
+                    "mdot_range": [self.sweep_config['hall_thruster']['mdot_min'].get(),
+                                 self.sweep_config['hall_thruster']['mdot_max'].get()],
+                    "Vd_steps": self.sweep_config['hall_thruster']['Vd_steps'].get(),
+                    "mdot_steps": self.sweep_config['hall_thruster']['mdot_steps'].get(),
+                    "eta_acc": self.eta_acc_var.get(),
+                    "tau_prop": self.tau_prop_var.get(),
+                    "divergence": {
+                        "model": self.config['hall_thruster']['divergence']['model'],
+                        "param_deg": self.hall_sigma_var.get()
+                    }
+                },
+                "constants": self.config['constants']
+            }
+
+        return config
+
+    def validate_numeric(self, value):
+        """Validate numeric input for sweep parameters"""
+        if value == "":
+            return True
+        try:
+            float(value)
+            return True
+        except ValueError:
+            return False
+
+    def select_input_folder(self):
+        """Select input folder for configuration files"""
+        folder = filedialog.askdirectory(title="Select Input Folder")
+        if folder:
+            self.input_folder.set(folder)
+
+    def select_output_folder(self):
+        """Select output folder for results and plots"""
+        folder = filedialog.askdirectory(title="Select Output Folder")
+        if folder:
+            self.output_folder.set(folder)
 
     def export_results(self):
         """Export current results to file"""
@@ -889,28 +1091,7 @@ EFFICIENCY ANALYSIS:
         except Exception as e:
             messagebox.showerror("Diagnostics Error", f"Could not run diagnostics: {e}")
 
-    def open_web_interface(self):
-        """Open web interface in browser"""
-        try:
-            # Start web server
-            server_process = subprocess.Popen(
-                [sys.executable, '-m', 'http.server', '8000'],
-                cwd=os.path.join(os.getcwd(), 'viz'),
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL
-            )
 
-            # Open browser after short delay
-            self.root.after(2000, lambda: webbrowser.open('http://localhost:8000'))
-
-            messagebox.showinfo("Web Interface",
-                              "Web interface opened in your browser!\n\n"
-                              "URL: http://localhost:8000\n\n"
-                              "The server is running in the background.\n"
-                              "Close the browser tab when done.")
-
-        except Exception as e:
-            messagebox.showerror("Web Interface Error", f"Could not open web interface: {e}")
 
     def view_documentation(self):
         """Open documentation files"""
