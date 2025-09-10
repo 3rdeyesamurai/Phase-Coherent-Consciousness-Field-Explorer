@@ -1,6 +1,5 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-import numpy as np
 import json
 from ion_hall_parametric import PropulsionCalculator
 import os
@@ -212,7 +211,8 @@ def run_full_sweep():
     print("\n[SWEEP] Running ion engine parametric sweep...")
     try:
         ion_results = calc.parametric_sweep_ion()
-        print(f"[DATA] Generated {len(ion_results)} ion engine data points")
+        ion_data_count = len(ion_results)
+        print(f"[DATA] Generated {ion_data_count} ion engine data points")
 
         ion_csv_path = os.path.join(output_dir, 'ion_sweep.csv')
         if save_to_csv(ion_results, ion_csv_path):
@@ -224,9 +224,8 @@ def run_full_sweep():
     print("\n[SWEEP] Running Hall thruster parametric sweep...")
     try:
         hall_results = calc.parametric_sweep_hall()
-        print(
-            f"[DATA] Generated {
-                len(hall_results)} Hall thruster data points")
+        hall_data_count = len(hall_results)
+        print(f"[DATA] Generated {hall_data_count} Hall thruster data points")
 
         hall_csv_path = os.path.join(output_dir, 'hall_sweep.csv')
         if save_to_csv(hall_results, hall_csv_path):

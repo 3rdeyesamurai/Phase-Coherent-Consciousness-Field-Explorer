@@ -23,8 +23,6 @@ import sys
 import subprocess
 import threading
 
-from pathlib import Path
-
 
 class IonicPropulsionGUI:
     def __init__(self, root):

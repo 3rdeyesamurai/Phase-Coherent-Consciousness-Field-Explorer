@@ -6,11 +6,8 @@ Comprehensive system health check and troubleshooting tool
 
 import os
 import sys
-import platform
-import subprocess
 import json
 from pathlib import Path
-import socket
 import urllib.request
 
 
@@ -250,18 +247,19 @@ def check_system_resources():
         import psutil
         memory = psutil.virtual_memory()
         memory_gb = memory.available / (1024**3)
-        print(".1f")
+        print(f"   Available memory: {memory_gb:.1f} GB")
         if memory_gb < 1:
             print("⚠️  Low memory detected. Performance may be slow.")
             return True, "Low memory warning"
     except ImportError:
         print("ℹ️  Memory check skipped (psutil not available)")
+        return True, None
 
     # Check disk space
     try:
         stat = os.statvfs('.')
         free_space_gb = (stat.f_bavail * stat.f_frsize) / (1024**3)
-        print(".1f")
+        print(f"   Free disk space: {free_space_gb:.1f} GB")
         if free_space_gb < 1:
             print("⚠️  Low disk space detected.")
             return False, "Low disk space"
@@ -271,6 +269,7 @@ def check_system_resources():
     except Exception as e:
         print(f"ℹ️  Disk space check failed: {e}")
         print("   This is normal on some systems")
+        return True, None
 
     print("✅ System resources OK")
     return True, None

@@ -139,9 +139,7 @@ def verify_installation():
 
     # Test import of key modules
     try:
-        import numpy as np
-        import pandas as pd
-        import matplotlib.pyplot as plt
+# These imports are used in the setup process
 
         # Quick test calculation
         from ion_hall_parametric import PropulsionCalculator
