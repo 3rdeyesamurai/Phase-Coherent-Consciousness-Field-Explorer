@@ -1,15 +1,37 @@
-# Ionic Propulsion Lab
+# 🚀 Enhanced Ionic Propulsion Lab
 
-An interactive parametric analysis tool for ion engines and Hall thrusters with real-time visualization.
+An advanced parametric analysis tool for ion engines and Hall thrusters with sophisticated physics modeling and real-time interactive visualization.
 
-## Features
+## 🎯 Quick Start (Choose Your Path)
 
-- **Parametric Sweeps**: Comprehensive analysis across voltage, current, mass flow, and gas types
-- **Grid Transparency Modeling**: Accounts for optical open area and transmission losses
-- **Plume Divergence**: Gaussian and cosine models for beam spreading effects
-- **Interactive Web Visualization**: Real-time sliders and filters with D3.js charts
-- **Multi-Gas Support**: Xenon, Iodine, Krypton, Argon, and Water fragments
-- **Static Plot Generation**: High-quality PNG plots for reports
+### Option A: Standalone Executable (Easiest)
+1. **Download:** Get the pre-built executable for your system
+2. **Run:** Double-click `Ionic_Propulsion_Lab.exe` (Windows) or executable (Linux/macOS)
+3. **Use:** Full GUI application with all features included
+
+### Option B: Build Your Own Executable
+1. Run: `python build_executable.py`
+2. Follow the build process
+3. Use the generated executable
+
+### Option C: Development Setup
+1. **Automated:** `python setup.py` (installs dependencies automatically)
+2. **Manual:** `pip install numpy pandas matplotlib`
+3. **Launch:** `python launcher.py` or `python gui_app.py`
+
+### Option D: Command Line Tools
+1. **Analysis:** `python run_sweep.py`
+2. **Web Interface:** `python -m http.server 8000` → `http://localhost:8000/viz/index.html`
+3. **Diagnostics:** `python diagnostics.py`
+
+## ✨ Key Features
+
+- **🔬 Advanced Physics Models**: Child-Langmuir space-charge limits, geometric transparency, plume divergence
+- **📊 Parametric Sweeps**: Comprehensive analysis across voltage, current, mass flow, geometry, and gas types
+- **🎛️ Interactive Web Interface**: Real-time sliders and filters with D3.js charts
+- **📈 Enhanced Analytics**: Perveance analysis, efficiency breakdowns, space-charge diagnostics
+- **🌍 Multi-Gas Support**: Xenon, Iodine, Krypton, Argon, and Water fragments
+- **📋 Professional Plots**: High-quality PNG plots for reports and publications
 
 ## Physics Models
 
