@@ -17,36 +17,34 @@ from pathlib import Path
 def print_header():
     """Display build header"""
     print("""
-╔══════════════════════════════════════════════════════════════╗
-║            🚀 IONIC PROPULSION LAB EXECUTABLE BUILDER          ║
-║              Standalone Application Creator                     ║
-╚══════════════════════════════════════════════════════════════╝
+            IONIC PROPULSION LAB EXECUTABLE BUILDER
+              Standalone Application Creator
     """)
 
 def check_pyinstaller():
     """Check if PyInstaller is installed"""
-    print("🔧 Checking PyInstaller installation...")
+    print("[TOOL] Checking PyInstaller installation...")
 
     try:
         import PyInstaller
-        print("✅ PyInstaller found")
+        print("[OK] PyInstaller found")
         return True
     except ImportError:
-        print("❌ PyInstaller not found")
-        print("\n📦 Installing PyInstaller...")
+        print("[ERROR] PyInstaller not found")
+        print("\n[INSTALL] Installing PyInstaller...")
 
         try:
             subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'pyinstaller'])
-            print("✅ PyInstaller installed successfully")
+            print("[OK] PyInstaller installed successfully")
             return True
         except subprocess.CalledProcessError:
-            print("❌ Failed to install PyInstaller")
+            print("[ERROR] Failed to install PyInstaller")
             print("   Please install manually: pip install pyinstaller")
             return False
 
 def check_dependencies():
     """Check if all required packages are available"""
-    print("\n📦 Checking application dependencies...")
+    print("\n[DEP] Checking application dependencies...")
 
     required_packages = [
         'numpy', 'pandas', 'matplotlib', 'tkinter', 'json', 'os', 'sys'
@@ -59,27 +57,30 @@ def check_dependencies():
                 import tkinter
             else:
                 __import__(package)
-            print(f"✅ {package} available")
+            print(f"[OK] {package} available")
         except ImportError:
             missing_packages.append(package)
-            print(f"❌ {package} missing")
+            print(f"[ERROR] {package} missing")
 
     if missing_packages:
-        print(f"\n🔧 Installing missing packages: {', '.join(missing_packages)}")
+        print(f"\n[INSTALL] Installing missing packages: {', '.join(missing_packages)}")
         try:
             subprocess.check_call([sys.executable, '-m', 'pip', 'install'] + missing_packages)
-            print("✅ All packages installed")
+            print("[OK] All packages installed")
             return True
         except subprocess.CalledProcessError:
-            print("❌ Failed to install packages")
+            print("[ERROR] Failed to install packages")
             return False
 
-    print("✅ All dependencies available")
+    print("[OK] All dependencies available")
     return True
 
 def create_spec_file():
     """Create PyInstaller spec file for better control"""
-    spec_content = '''
+    # Get the current directory (should be ionic_propulsion_lab)
+    current_dir = os.getcwd()
+
+    spec_content = f'''
 # -*- mode: python ; coding: utf-8 -*-
 
 import os
@@ -88,10 +89,10 @@ import sys
 block_cipher = None
 
 # Add current directory to path
-current_dir = os.path.dirname(os.path.abspath(SPEC))
+current_dir = r"{current_dir}"
 
 a = Analysis(
-    ['gui_app.py'],
+    [os.path.join(current_dir, 'gui_app.py')],
     pathex=[current_dir],
     binaries=[],
     datas=[
@@ -121,7 +122,7 @@ a = Analysis(
         'numpy.lib.format',
     ],
     hookspath=[],
-    hooksconfig={},
+    hooksconfig={{}},
     runtime_hooks=[],
     excludes=[],
     win_no_prefer_redirects=False,
@@ -159,12 +160,12 @@ exe = EXE(
     with open('ionic_propulsion_lab.spec', 'w') as f:
         f.write(spec_content)
 
-    print("✅ Created PyInstaller spec file")
+    print("[OK] Created PyInstaller spec file")
     return True
 
 def build_executable():
     """Build the executable using PyInstaller"""
-    print("\n🏗️  Building executable...")
+    print("\n[BUILD] Building executable...")
 
     system = platform.system().lower()
     spec_file = 'ionic_propulsion_lab.spec'
@@ -188,19 +189,19 @@ def build_executable():
             continue
 
     if cmd is None:
-        print("❌ Could not find a working PyInstaller command")
+        print("[ERROR] Could not find a working PyInstaller command")
         return False
 
     # Note: --onefile and --windowed options are specified in the .spec file
     # Don't add them here when using a spec file
 
-    print(f"🔧 Build command: {' '.join(cmd)}")
+    print(f"[CMD] Build command: {' '.join(cmd)}")
 
     try:
         result = subprocess.run(cmd, capture_output=True, text=True)
 
         if result.returncode == 0:
-            print("✅ Executable built successfully!")
+            print("[OK] Executable built successfully!")
 
             # Find the executable
             dist_dir = Path('dist')
@@ -208,22 +209,22 @@ def build_executable():
                 exe_files = list(dist_dir.glob('*'))
                 if exe_files:
                     exe_path = exe_files[0]
-                    print(f"📁 Executable location: {exe_path.absolute()}")
+                    print(f"[DIR] Executable location: {exe_path.absolute()}")
 
                     # Copy to root directory for easy access
                     final_name = f"Ionic_Propulsion_Lab_{system}.exe" if system == 'windows' else f"Ionic_Propulsion_Lab_{system}"
                     shutil.copy2(exe_path, final_name)
-                    print(f"📋 Copied to: {Path(final_name).absolute()}")
+                    print(f"[COPY] Copied to: {Path(final_name).absolute()}")
 
             return True
         else:
-            print("❌ Build failed")
+            print("[ERROR] Build failed")
             print("STDOUT:", result.stdout)
             print("STDERR:", result.stderr)
             return False
 
     except Exception as e:
-        print(f"❌ Build error: {e}")
+        print(f"[ERROR] Build error: {e}")
         return False
 
 def create_installer_script():

@@ -7,15 +7,14 @@ import sys
 block_cipher = None
 
 # Add current directory to path
-current_dir = os.path.dirname(os.path.abspath(SPEC))
+current_dir = r"C:\Users\Kobyd\OneDrive\Documents\GitHub\Phase-Coherent-Consciousness-Field-Explorer"
 
 a = Analysis(
-    ['gui_app.py'],
+    [os.path.join(current_dir, 'gui_app.py')],
     pathex=[current_dir],
     binaries=[],
     datas=[
         (os.path.join(current_dir, 'config.json'), '.'),
-        (os.path.join(current_dir, 'viz'), 'viz'),
         (os.path.join(current_dir, 'README.md'), '.'),
         (os.path.join(current_dir, 'USER_GUIDE.md'), '.'),
         (os.path.join(current_dir, 'INSTALL_GUIDE.md'), '.'),

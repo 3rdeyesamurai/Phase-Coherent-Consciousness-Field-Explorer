@@ -12,18 +12,18 @@ def save_to_csv(results, filename):
     if output_dir:
         try:
             os.makedirs(output_dir, exist_ok=True)
-            print(f"✅ Created/verified directory: {output_dir}")
+            print(f"[OK] Created/verified directory: {output_dir}")
         except Exception as e:
-            print(f"❌ Error creating directory {output_dir}: {e}")
+            print(f"[ERROR] Error creating directory {output_dir}: {e}")
             return False
 
     try:
         df = pd.DataFrame(results)
         df.to_csv(filename, index=False)
-        print(f"✅ Saved {len(results)} data points to {filename}")
+        print(f"[OK] Saved {len(results)} data points to {filename}")
         return True
     except Exception as e:
-        print(f"❌ Error saving CSV to {filename}: {e}")
+        print(f"[ERROR] Error saving CSV to {filename}: {e}")
         return False
 
 def create_plots(results, thruster_type, output_dir='output'):
@@ -136,70 +136,70 @@ def create_plots(results, thruster_type, output_dir='output'):
 
 def run_full_sweep():
     """Run complete parametric sweep for both thruster types"""
-    print("🔬 Initializing propulsion calculator...")
+    print("[INIT] Initializing propulsion calculator...")
     try:
         calc = PropulsionCalculator()
-        print("✅ Calculator initialized successfully")
+        print("[OK] Calculator initialized successfully")
     except Exception as e:
-        print(f"❌ Failed to initialize calculator: {e}")
+        print(f"[ERROR] Failed to initialize calculator: {e}")
         return False
 
     # Check for custom output folder
     output_dir = os.environ.get('IONIC_OUTPUT_FOLDER', 'output')
-    print(f"📁 Output folder: {output_dir}")
+    print(f"[FOLDER] Output folder: {output_dir}")
 
     # Check for dynamic configuration from GUI
     dynamic_config = os.environ.get('IONIC_SWEEP_CONFIG')
     if dynamic_config and os.path.exists(dynamic_config):
-        print(f"📋 Using dynamic configuration: {dynamic_config}")
+        print(f"[CONFIG] Using dynamic configuration: {dynamic_config}")
         try:
             with open(dynamic_config, 'r') as f:
                 config = json.load(f)
             # Update calculator with dynamic config
             calc.update_config(config)
-            print("✅ Dynamic configuration applied")
+            print("[OK] Dynamic configuration applied")
         except Exception as e:
-            print(f"⚠️  Could not load dynamic config: {e}")
+            print(f"[WARNING] Could not load dynamic config: {e}")
 
     success_count = 0
 
-    print("\n⚡ Running ion engine parametric sweep...")
+    print("\n[SWEEP] Running ion engine parametric sweep...")
     try:
         ion_results = calc.parametric_sweep_ion()
-        print(f"📊 Generated {len(ion_results)} ion engine data points")
+        print(f"[DATA] Generated {len(ion_results)} ion engine data points")
 
         ion_csv_path = os.path.join(output_dir, 'ion_sweep.csv')
         if save_to_csv(ion_results, ion_csv_path):
             create_plots(ion_results, 'ion', output_dir)
             success_count += 1
     except Exception as e:
-        print(f"❌ Ion engine sweep failed: {e}")
+        print(f"[ERROR] Ion engine sweep failed: {e}")
 
-    print("\n⚡ Running Hall thruster parametric sweep...")
+    print("\n[SWEEP] Running Hall thruster parametric sweep...")
     try:
         hall_results = calc.parametric_sweep_hall()
-        print(f"📊 Generated {len(hall_results)} Hall thruster data points")
+        print(f"[DATA] Generated {len(hall_results)} Hall thruster data points")
 
         hall_csv_path = os.path.join(output_dir, 'hall_sweep.csv')
         if save_to_csv(hall_results, hall_csv_path):
             create_plots(hall_results, 'hall', output_dir)
             success_count += 1
     except Exception as e:
-        print(f"❌ Hall thruster sweep failed: {e}")
+        print(f"[ERROR] Hall thruster sweep failed: {e}")
 
     if success_count == 0:
-        print("\n❌ All sweeps failed. Please check the error messages above.")
+        print("\n[ERROR] All sweeps failed. Please check the error messages above.")
         return False
 
-    print(f"\n🎉 Sweep complete! ({success_count}/2 successful)")
-    print(f"📁 Results saved to {output_dir} folder")
-    print("📊 Generated plots and CSV files ready for analysis")
+    print(f"\n[SUCCESS] Sweep complete! ({success_count}/2 successful)")
+    print(f"[FOLDER] Results saved to {output_dir} folder")
+    print("[DATA] Generated plots and CSV files ready for analysis")
 
     # Print some summary statistics
     try:
         if 'ion_results' in locals() and ion_results:
             ion_df = pd.DataFrame(ion_results)
-            print(f"\n📈 Ion Engine Summary (Xenon, typical conditions):")
+            print(f"\n[SUMMARY] Ion Engine Summary (Xenon, typical conditions):")
             xenon_ion = ion_df[(ion_df['gas'] == 'Xenon') &
                               (ion_df['Va'] >= 1500) & (ion_df['Va'] <= 2500) &
                               (ion_df['Ib'] >= 1.0) & (ion_df['Ib'] <= 3.0)]
@@ -212,7 +212,7 @@ def run_full_sweep():
 
         if 'hall_results' in locals() and hall_results:
             hall_df = pd.DataFrame(hall_results)
-            print(f"\n📈 Hall Thruster Summary (Xenon, typical conditions):")
+            print(f"\n[SUMMARY] Hall Thruster Summary (Xenon, typical conditions):")
             xenon_hall = hall_df[(hall_df['gas'] == 'Xenon') &
                                 (hall_df['Vd'] >= 300) & (hall_df['Vd'] <= 500) &
                                 (hall_df['mdot'] >= 3e-6) & (hall_df['mdot'] <= 7e-6)]
@@ -222,11 +222,11 @@ def run_full_sweep():
                 print(f"   Power: {xenon_hall['P_elec'].mean():.1f} W")
 
     except Exception as e:
-        print(f"⚠️  Could not generate summary statistics: {e}")
+        print(f"[WARNING] Could not generate summary statistics: {e}")
 
-    print("\n💡 Next steps:")
+    print("\n[TIPS] Next steps:")
     print("   1. View plots in output/ folder")
-    print("   2. Run: python launcher.py → Option 2 for interactive viz")
+    print("   2. Run: python launcher.py -> Option 2 for interactive viz")
     print("   3. Open: http://localhost:8000 in your browser")
 
     return True
