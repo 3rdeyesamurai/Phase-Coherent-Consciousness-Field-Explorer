@@ -51,6 +51,16 @@ class IonicPropulsionGUI:
             relief=tk.SUNKEN)
         status_bar.pack(side=tk.BOTTOM, fill=tk.X)
 
+        # Mission feasibility indicator
+        self.mission_status_var = tk.StringVar()
+        self.mission_status_var.set("🟡 Mission Status: Not Analyzed")
+        mission_status_bar = ttk.Label(
+            self.root,
+            textvariable=self.mission_status_var,
+            relief=tk.SUNKEN,
+            background="light yellow")
+        mission_status_bar.pack(side=tk.BOTTOM, fill=tk.X)
+
         # Parametric sweep configuration variables
         self.sweep_config = {
             'ion_engine': {
@@ -71,12 +81,48 @@ class IonicPropulsionGUI:
             }
         }
 
+        # Mission planning variables (load from config if available)
+        mission_defaults = self.config.get('mission_planning', {}).get('default_values', {})
+        self.mission_config = {
+            'bus_power': tk.DoubleVar(value=mission_defaults.get('bus_power', 5000)),  # W
+            'target_dv': tk.DoubleVar(value=mission_defaults.get('target_dv', 2000)),  # m/s
+            'mission_time': tk.DoubleVar(value=mission_defaults.get('mission_time', 365)),  # days
+            'engine_count': tk.IntVar(value=mission_defaults.get('engine_count', 4)),
+            'engine_rating': tk.DoubleVar(value=mission_defaults.get('engine_rating', 1.0)),  # kW per engine
+            'xenon_budget': tk.DoubleVar(value=mission_defaults.get('xenon_budget', 1000)),  # kg
+            'power_efficiency': tk.DoubleVar(value=self.config.get('mission_planning', {}).get('power_efficiency', 0.7)),  # Power processing efficiency
+            'thrust_margin': tk.DoubleVar(value=self.config.get('mission_planning', {}).get('thrust_margin', 1.2))  # Safety margin
+        }
+
+        # Initialize tooltips
+        self.create_tooltips()
+
         # Initialize the GUI components
         self.create_menu()
         self.create_main_layout()
         self.create_parameter_controls()
         self.create_results_display()
         self.initialize_calculator()
+
+        # Create keyboard shortcuts
+        self.create_keyboard_shortcuts()
+
+    def create_tooltips(self):
+        """Create tooltip functionality for better user experience"""
+        # This is a simple tooltip implementation
+        # In a full implementation, you'd use a proper tooltip library
+        self.tooltip = None
+
+    def create_keyboard_shortcuts(self):
+        """Create keyboard shortcuts for common actions"""
+        # Bind keyboard shortcuts
+        self.root.bind('<Control-r>', lambda e: self.update_calculations())
+        self.root.bind('<Control-s>', lambda e: self.run_parametric_sweep())
+        self.root.bind('<Control-e>', lambda e: self.export_results())
+        self.root.bind('<Control-d>', lambda e: self.run_diagnostics())
+        self.root.bind('<F1>', lambda e: self.show_parameter_help())
+        self.root.bind('<Control-q>', lambda e: self.root.quit())
+        self.root.bind('<Control-m>', lambda e: self.analyze_mission())
 
     def load_config(self):
         """Load configuration file with proper path resolution for executables"""
@@ -169,15 +215,37 @@ class IonicPropulsionGUI:
         main_frame = ttk.Frame(self.root)
         main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        # Left panel - Controls
-        left_panel = ttk.Frame(main_frame, width=400)
-        left_panel.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 10))
+        # Left panel - Controls with scroll bar
+        left_container = ttk.Frame(main_frame, width=450)
+        left_container.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 10))
+
+        # Create canvas and scrollbar for left panel
+        left_canvas = tk.Canvas(left_container, width=430)
+        left_scrollbar = ttk.Scrollbar(left_container, orient="vertical", command=left_canvas.yview)
+        left_scrollable_frame = ttk.Frame(left_canvas)
+
+        left_scrollable_frame.bind(
+            "<Configure>",
+            lambda e: left_canvas.configure(scrollregion=left_canvas.bbox("all"))
+        )
+
+        left_canvas.create_window((0, 0), window=left_scrollable_frame, anchor="nw")
+        left_canvas.configure(yscrollcommand=left_scrollbar.set)
+
+        # Pack the canvas and scrollbar
+        left_canvas.pack(side="left", fill="both", expand=True)
+        left_scrollbar.pack(side="right", fill="y")
+
+        # Bind mousewheel to canvas
+        def _on_mousewheel(event):
+            left_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        left_canvas.bind_all("<MouseWheel>", _on_mousewheel)
 
         # Right panel - Results
         right_panel = ttk.Frame(main_frame)
         right_panel.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
 
-        self.left_panel = left_panel
+        self.left_panel = left_scrollable_frame
         self.right_panel = right_panel
 
     def create_parameter_controls(self):
@@ -225,6 +293,9 @@ class IonicPropulsionGUI:
             state="readonly")
         gas_combo.pack(fill=tk.X)
         gas_combo.bind("<<ComboboxSelected>>", self.update_calculations)
+
+        # Mission planning parameters
+        self.create_mission_planning_controls()
 
         # Folder selection
         folder_frame = ttk.LabelFrame(
@@ -304,6 +375,158 @@ class IonicPropulsionGUI:
                    command=self.run_parametric_sweep).pack(fill=tk.X)
 
         self.update_parameter_controls()
+
+    def create_mission_planning_controls(self):
+        """Create mission planning parameter controls"""
+        # Mission planning frame
+        self.mission_frame = ttk.LabelFrame(
+            self.left_panel,
+            text="🛰️ Mission Planning",
+            padding=10)
+        self.mission_frame.pack(fill=tk.X, pady=(0, 10))
+
+        # Bus power input
+        ttk.Label(self.mission_frame, text="Bus Power (W)",
+                  font=("Arial", 10, "bold")).pack(anchor=tk.W)
+        bus_power_frame = ttk.Frame(self.mission_frame)
+        bus_power_frame.pack(fill=tk.X, pady=(0, 10))
+
+        bus_power_scale = ttk.Scale(
+            bus_power_frame,
+            from_=1000,
+            to=20000,
+            variable=self.mission_config['bus_power'],
+            orient=tk.HORIZONTAL,
+            command=self.update_mission_calculations)
+        bus_power_scale.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        ttk.Label(
+            bus_power_frame,
+            textvariable=self.mission_config['bus_power'],
+            width=8).pack(side=tk.RIGHT)
+
+        ttk.Label(self.mission_frame, text="W (watts)",
+                  foreground="blue").pack(anchor=tk.W, padx=(0, 5))
+
+        # Target Δv input
+        ttk.Label(self.mission_frame, text="Target Δv (m/s)",
+                  font=("Arial", 10, "bold")).pack(anchor=tk.W)
+        dv_frame = ttk.Frame(self.mission_frame)
+        dv_frame.pack(fill=tk.X, pady=(0, 10))
+
+        dv_scale = ttk.Scale(
+            dv_frame,
+            from_=100,
+            to=10000,
+            variable=self.mission_config['target_dv'],
+            orient=tk.HORIZONTAL,
+            command=self.update_mission_calculations)
+        dv_scale.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        ttk.Label(
+            dv_frame,
+            textvariable=self.mission_config['target_dv'],
+            width=8).pack(side=tk.RIGHT)
+
+        ttk.Label(self.mission_frame, text="m/s (meters per second)",
+                  foreground="blue").pack(anchor=tk.W, padx=(0, 5))
+
+        # Mission time input
+        ttk.Label(self.mission_frame, text="Mission Time (days)",
+                  font=("Arial", 10, "bold")).pack(anchor=tk.W)
+        time_frame = ttk.Frame(self.mission_frame)
+        time_frame.pack(fill=tk.X, pady=(0, 10))
+
+        time_scale = ttk.Scale(
+            time_frame,
+            from_=30,
+            to=2000,
+            variable=self.mission_config['mission_time'],
+            orient=tk.HORIZONTAL,
+            command=self.update_mission_calculations)
+        time_scale.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        ttk.Label(
+            time_frame,
+            textvariable=self.mission_config['mission_time'],
+            width=8).pack(side=tk.RIGHT)
+
+        ttk.Label(self.mission_frame, text="days",
+                  foreground="blue").pack(anchor=tk.W, padx=(0, 5))
+
+        # Array design inputs
+        ttk.Label(self.mission_frame, text="Array Design",
+                  font=("Arial", 10, "bold")).pack(anchor=tk.W, pady=(10, 5))
+
+        # Engine count
+        ttk.Label(self.mission_frame, text="Engine Count").pack(anchor=tk.W)
+        engine_count_frame = ttk.Frame(self.mission_frame)
+        engine_count_frame.pack(fill=tk.X, pady=(0, 5))
+
+        engine_count_scale = ttk.Scale(
+            engine_count_frame,
+            from_=1,
+            to=20,
+            variable=self.mission_config['engine_count'],
+            orient=tk.HORIZONTAL,
+            command=self.update_mission_calculations)
+        engine_count_scale.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        ttk.Label(
+            engine_count_frame,
+            textvariable=self.mission_config['engine_count'],
+            width=8).pack(side=tk.RIGHT)
+
+        # Engine rating
+        ttk.Label(self.mission_frame, text="Engine Rating (kW)").pack(anchor=tk.W)
+        engine_rating_frame = ttk.Frame(self.mission_frame)
+        engine_rating_frame.pack(fill=tk.X, pady=(0, 10))
+
+        engine_rating_scale = ttk.Scale(
+            engine_rating_frame,
+            from_=0.1,
+            to=5.0,
+            variable=self.mission_config['engine_rating'],
+            orient=tk.HORIZONTAL,
+            command=self.update_mission_calculations)
+        engine_rating_scale.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        ttk.Label(
+            engine_rating_frame,
+            textvariable=self.mission_config['engine_rating'],
+            width=8).pack(side=tk.RIGHT)
+
+        ttk.Label(self.mission_frame, text="kW per engine",
+                  foreground="blue").pack(anchor=tk.W, padx=(0, 5))
+
+        # Xenon budget input
+        ttk.Label(self.mission_frame, text="Xenon Budget (kg)",
+                  font=("Arial", 10, "bold")).pack(anchor=tk.W)
+        xenon_frame = ttk.Frame(self.mission_frame)
+        xenon_frame.pack(fill=tk.X, pady=(0, 10))
+
+        xenon_scale = ttk.Scale(
+            xenon_frame,
+            from_=10,
+            to=5000,
+            variable=self.mission_config['xenon_budget'],
+            orient=tk.HORIZONTAL,
+            command=self.update_mission_calculations)
+        xenon_scale.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        ttk.Label(
+            xenon_frame,
+            textvariable=self.mission_config['xenon_budget'],
+            width=8).pack(side=tk.RIGHT)
+
+        ttk.Label(self.mission_frame, text="kg (kilograms)",
+                  foreground="blue").pack(anchor=tk.W, padx=(0, 5))
+
+        # Mission analysis button
+        ttk.Button(
+            self.mission_frame,
+            text="📊 Analyze Mission Feasibility",
+            command=self.analyze_mission).pack(fill=tk.X, pady=(10, 0))
 
     def create_sweep_controls(self):
         """Create parametric sweep parameter controls"""
@@ -1050,6 +1273,174 @@ For detailed documentation, see README.md and USER_GUIDE.md
             self.results_text.delete(1.0, tk.END)
             self.results_text.insert(tk.END, f"❌ Calculation Error: {e}")
             self.status_var.set(f"❌ Calculation error: {str(e)[:50]}...")
+
+    def update_mission_calculations(self, *args):
+        """Update mission-related calculations when parameters change"""
+        # This method is called when mission planning sliders change
+        # Could be used for real-time mission feasibility updates
+        pass
+
+    def analyze_mission(self):
+        """Analyze mission feasibility based on current parameters"""
+        if not self.current_results:
+            messagebox.showwarning("No Results", "Please run calculations first.")
+            return
+
+        try:
+            # Get current thruster results
+            result = self.current_results
+
+            # Mission parameters
+            bus_power = self.mission_config['bus_power'].get()
+            target_dv = self.mission_config['target_dv'].get()
+            mission_time = self.mission_config['mission_time'].get()
+            engine_count = self.mission_config['engine_count'].get()
+            engine_rating = self.mission_config['engine_rating'].get()
+            xenon_budget = self.mission_config['xenon_budget'].get()
+            power_efficiency = self.mission_config['power_efficiency'].get()
+            thrust_margin = self.mission_config['thrust_margin'].get()
+
+            # Calculate array performance
+            single_engine_power = result['P_elec']
+            single_engine_thrust = result['T_axial']
+
+            # Array calculations
+            array_power = single_engine_power * engine_count
+            array_thrust = single_engine_thrust * engine_count
+
+            # Power analysis
+            available_power = bus_power * power_efficiency
+            power_utilization = (array_power / available_power) * 100
+
+            # Thrust analysis (with margin)
+            required_thrust = single_engine_thrust * thrust_margin
+            array_thrust_margin = array_thrust / required_thrust
+
+            # Mass flow and propellant analysis
+            single_engine_mdot = result['mdot']
+            array_mdot = single_engine_mdot * engine_count
+
+            # Mission duration analysis
+            mission_seconds = mission_time * 24 * 3600  # Convert days to seconds
+            total_propellant_needed = array_mdot * mission_seconds
+
+            # Xenon budget analysis
+            propellant_utilization = (total_propellant_needed / xenon_budget) * 100
+
+            # Δv calculation (simplified)
+            isp_eff = result.get('Isp_eff', result.get('Isp_ax', 0))
+            if isp_eff > 0:
+                actual_dv = isp_eff * 9.81 * np.log(1 + (xenon_budget / (engine_count * 10)))  # Rough estimate
+                dv_achievement = (actual_dv / target_dv) * 100
+            else:
+                actual_dv = 0
+                dv_achievement = 0
+
+            # Mission feasibility assessment
+            feasibility_score = 0
+            issues = []
+
+            if power_utilization <= 100:
+                feasibility_score += 25
+            else:
+                issues.append("Power consumption exceeds available bus power")
+
+            if propellant_utilization <= 100:
+                feasibility_score += 25
+            else:
+                issues.append("Propellant consumption exceeds budget")
+
+            if dv_achievement >= 100:
+                feasibility_score += 25
+            else:
+                issues.append(f"Δv achievement: {dv_achievement:.1f}% of target")
+
+            if array_thrust_margin >= 1.0:
+                feasibility_score += 25
+            else:
+                issues.append("Insufficient thrust margin")
+
+            # Display mission analysis results
+            self.display_mission_analysis(
+                result, array_power, array_thrust, power_utilization,
+                propellant_utilization, dv_achievement, feasibility_score, issues
+            )
+
+        except Exception as e:
+            messagebox.showerror("Mission Analysis Error", f"Could not analyze mission: {e}")
+
+    def display_mission_analysis(self, result, array_power, array_thrust,
+                                power_utilization, propellant_utilization,
+                                dv_achievement, feasibility_score, issues):
+        """Display mission analysis results"""
+        self.results_text.delete(1.0, tk.END)
+
+        # Mission parameters summary
+        mission_params = f"""
+╔══════════════════════════════════════════════════════════════╗
+║                    🛰️ MISSION ANALYSIS                          ║
+║                Feasibility Assessment                          ║
+╚══════════════════════════════════════════════════════════════╝
+
+📊 MISSION PARAMETERS:
+   • Bus Power: {self.mission_config['bus_power'].get():.0f} W
+   • Target Δv: {self.mission_config['target_dv'].get():.0f} m/s
+   • Mission Time: {self.mission_config['mission_time'].get():.0f} days
+   • Engine Count: {self.mission_config['engine_count'].get()}
+   • Engine Rating: {self.mission_config['engine_rating'].get():.1f} kW
+   • Xenon Budget: {self.mission_config['xenon_budget'].get():.0f} kg
+
+🔧 ARRAY PERFORMANCE:
+   • Single Engine Power: {result['P_elec']:.0f} W
+   • Single Engine Thrust: {result['T_axial'] * 1000:.1f} mN
+   • Array Power: {array_power:.0f} W
+   • Array Thrust: {array_thrust * 1000:.1f} mN
+
+⚡ POWER ANALYSIS:
+   • Available Power: {self.mission_config['bus_power'].get() * self.mission_config['power_efficiency'].get():.0f} W
+   • Power Utilization: {power_utilization:.1f}%
+   • Status: {'✅ Within limits' if power_utilization <= 100 else '❌ Exceeds limits'}
+
+🧪 PROPELLANT ANALYSIS:
+   • Propellant Utilization: {propellant_utilization:.1f}%
+   • Status: {'✅ Within budget' if propellant_utilization <= 100 else '❌ Exceeds budget'}
+
+🚀 MISSION PERFORMANCE:
+   • Δv Achievement: {dv_achievement:.1f}%
+   • Status: {'✅ Target met' if dv_achievement >= 100 else '❌ Target not met'}
+
+📈 THRUST MARGIN:
+   • Thrust Margin: {self.mission_config['thrust_margin'].get():.1f}x
+   • Status: {'✅ Adequate margin' if array_thrust / (result['T_axial'] * self.mission_config['thrust_margin'].get()) >= 1 else '❌ Insufficient margin'}
+
+🎯 FEASIBILITY SCORE: {feasibility_score}/100
+   • {'🟢 HIGH FEASIBILITY' if feasibility_score >= 75 else '🟡 MODERATE FEASIBILITY' if feasibility_score >= 50 else '🔴 LOW FEASIBILITY'}
+        """
+
+        if issues:
+            mission_params += f"\n⚠️ ISSUES IDENTIFIED:\n"
+            for i, issue in enumerate(issues, 1):
+                mission_params += f"   {i}. {issue}\n"
+
+        mission_params += f"""
+💡 RECOMMENDATIONS:
+   • {'Increase engine count or reduce power per engine' if power_utilization > 100 else 'Power allocation looks good'}
+   • {'Increase xenon budget or reduce mission time' if propellant_utilization > 100 else 'Propellant budget is adequate'}
+   • {'Optimize thruster performance or extend mission time' if dv_achievement < 100 else 'Δv target is achievable'}
+   • {'Review thrust requirements and safety margins' if array_thrust / (result['T_axial'] * self.mission_config['thrust_margin'].get()) < 1 else 'Thrust margin is appropriate'}
+        """
+
+        self.results_text.insert(tk.END, mission_params)
+
+        # Update mission status indicator
+        if feasibility_score >= 75:
+            self.mission_status_var.set(f"🟢 Mission Status: HIGH FEASIBILITY ({feasibility_score}/100)")
+        elif feasibility_score >= 50:
+            self.mission_status_var.set(f"🟡 Mission Status: MODERATE FEASIBILITY ({feasibility_score}/100)")
+        else:
+            self.mission_status_var.set(f"🔴 Mission Status: LOW FEASIBILITY ({feasibility_score}/100)")
+
+        self.status_var.set(f"✅ Mission analysis complete - Feasibility: {feasibility_score}/100")
 
     def display_ion_results(self, result):
         """Display ion engine calculation results"""

@@ -41,5 +41,23 @@
     "q": 1.602e-19,
     "g0": 9.81,
     "amu": 1.661e-27
+  },
+  "mission_planning": {
+    "bus_power_range": [1000, 20000],
+    "target_dv_range": [100, 10000],
+    "mission_time_range": [30, 2000],
+    "engine_count_range": [1, 20],
+    "engine_rating_range": [0.1, 5.0],
+    "xenon_budget_range": [10, 5000],
+    "power_efficiency": 0.7,
+    "thrust_margin": 1.2,
+    "default_values": {
+      "bus_power": 5000,
+      "target_dv": 2000,
+      "mission_time": 365,
+      "engine_count": 4,
+      "engine_rating": 1.0,
+      "xenon_budget": 1000
+    }
   }
 }
