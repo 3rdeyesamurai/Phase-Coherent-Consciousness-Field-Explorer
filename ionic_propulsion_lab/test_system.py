@@ -10,6 +10,7 @@ import subprocess
 import json
 from pathlib import Path
 
+
 def test_pyinstaller():
     """Test PyInstaller availability"""
     print("🔧 Testing PyInstaller...")
@@ -21,12 +22,14 @@ def test_pyinstaller():
         print("❌ PyInstaller not available")
         print("   Installing PyInstaller...")
         try:
-            subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'pyinstaller'])
+            subprocess.check_call(
+                [sys.executable, '-m', 'pip', 'install', 'pyinstaller'])
             print("✅ PyInstaller installed")
             return True
         except Exception as e:
             print(f"❌ Failed to install PyInstaller: {e}")
             return False
+
 
 def test_dependencies():
     """Test all required dependencies"""
@@ -52,7 +55,8 @@ def test_dependencies():
     if missing:
         print(f"\n🔧 Installing missing: {missing}")
         try:
-            subprocess.check_call([sys.executable, '-m', 'pip', 'install'] + missing)
+            subprocess.check_call(
+                [sys.executable, '-m', 'pip', 'install'] + missing)
             print("✅ Dependencies installed")
             return True
         except Exception as e:
@@ -60,6 +64,7 @@ def test_dependencies():
             return False
 
     return True
+
 
 def test_files():
     """Test all required files exist"""
@@ -83,6 +88,7 @@ def test_files():
 
     return len(missing) == 0, missing
 
+
 def test_config():
     """Test configuration file"""
     print("\n⚙️  Testing configuration...")
@@ -91,7 +97,12 @@ def test_config():
         with open('config.json', 'r') as f:
             config = json.load(f)
 
-        required_keys = ['gases', 'gas_masses', 'ion_engine', 'hall_thruster', 'constants']
+        required_keys = [
+            'gases',
+            'gas_masses',
+            'ion_engine',
+            'hall_thruster',
+            'constants']
         for key in required_keys:
             if key not in config:
                 print(f"❌ Missing config key: {key}")
@@ -102,6 +113,7 @@ def test_config():
     except Exception as e:
         print(f"❌ Configuration error: {e}")
         return False
+
 
 def test_calculator():
     """Test propulsion calculator"""
@@ -139,6 +151,7 @@ def test_calculator():
         print(f"❌ Calculator test failed: {e}")
         return False
 
+
 def test_gui_import():
     """Test GUI can be imported"""
     print("\n🖥️  Testing GUI import...")
@@ -152,14 +165,19 @@ def test_gui_import():
         print(f"❌ GUI import failed: {e}")
         return False
 
+
 def test_build_script():
     """Test build script can run"""
     print("\n🏗️  Testing build script...")
 
     try:
         # Test if build script can at least start
-        result = subprocess.run([sys.executable, 'build_executable.py', '--help'],
-                              capture_output=True, text=True, timeout=10)
+        result = subprocess.run([sys.executable,
+                                 'build_executable.py',
+                                 '--help'],
+                                capture_output=True,
+                                text=True,
+                                timeout=10)
 
         # Even if it fails, as long as it runs without crashing
         print("✅ Build script can execute")
@@ -170,6 +188,7 @@ def test_build_script():
     except Exception as e:
         print(f"❌ Build script failed: {e}")
         return False
+
 
 def run_all_tests():
     """Run all system tests"""
@@ -227,6 +246,7 @@ def run_all_tests():
         print("   • pip install numpy pandas matplotlib (dependencies)")
         print("   • Check that all files are present")
         return False
+
 
 if __name__ == "__main__":
     success = run_all_tests()

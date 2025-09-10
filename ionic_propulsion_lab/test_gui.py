@@ -7,6 +7,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import traceback
 
+
 def test_basic_gui():
     """Test basic GUI functionality"""
     try:
@@ -16,7 +17,8 @@ def test_basic_gui():
         root.geometry("400x300")
 
         # Add a simple label
-        label = ttk.Label(root, text="GUI Test - If you see this, Tkinter works!")
+        label = ttk.Label(
+            root, text="GUI Test - If you see this, Tkinter works!")
         label.pack(pady=20)
 
         # Add a button to close
@@ -38,6 +40,7 @@ def test_basic_gui():
     except Exception as e:
         print(f"❌ GUI test failed: {e}")
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     test_basic_gui()

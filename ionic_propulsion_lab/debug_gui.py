@@ -6,6 +6,7 @@ Debug script to isolate GUI issues
 import sys
 import traceback
 
+
 def test_gui_import():
     """Test importing the GUI module"""
     try:
@@ -17,6 +18,7 @@ def test_gui_import():
         print(f"❌ GUI module import failed: {e}")
         traceback.print_exc()
         return False
+
 
 def test_gui_initialization():
     """Test GUI initialization without main loop"""
@@ -43,6 +45,7 @@ def test_gui_initialization():
         traceback.print_exc()
         return False
 
+
 def test_config_loading():
     """Test configuration loading"""
     try:
@@ -54,12 +57,18 @@ def test_config_loading():
         root = tk.Tk()
 
         # Test the load_config method
-        gui = IonicPropulsionGUI.__new__(IonicPropulsionGUI)  # Create without __init__
+        gui = IonicPropulsionGUI.__new__(
+            IonicPropulsionGUI)  # Create without __init__
         gui.root = root
         config = gui.load_config()
 
         print(f"✅ Configuration loaded: {type(config)}")
-        print(f"   Keys: {list(config.keys()) if isinstance(config, dict) else 'Not a dict'}")
+        print(
+            f"   Keys: {
+                list(
+                    config.keys()) if isinstance(
+                    config,
+                    dict) else 'Not a dict'}")
 
         root.destroy()
         return True
@@ -68,6 +77,7 @@ def test_config_loading():
         print(f"❌ Configuration loading failed: {e}")
         traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     print("🔧 GUI Debug Test")

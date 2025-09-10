@@ -25,6 +25,7 @@ import threading
 
 from pathlib import Path
 
+
 class IonicPropulsionGUI:
     def __init__(self, root):
         self.root = root
@@ -39,12 +40,17 @@ class IonicPropulsionGUI:
 
         # Folder paths
         self.input_folder = tk.StringVar(value=os.getcwd())
-        self.output_folder = tk.StringVar(value=os.path.join(os.getcwd(), 'output'))
+        self.output_folder = tk.StringVar(
+            value=os.path.join(os.getcwd(), 'output'))
 
         # Status bar (create early for error handling)
         self.status_var = tk.StringVar()
-        self.status_var.set("Initializing - Enhanced Ionic Propulsion Analysis Tool")
-        status_bar = ttk.Label(self.root, textvariable=self.status_var, relief=tk.SUNKEN)
+        self.status_var.set(
+            "Initializing - Enhanced Ionic Propulsion Analysis Tool")
+        status_bar = ttk.Label(
+            self.root,
+            textvariable=self.status_var,
+            relief=tk.SUNKEN)
         status_bar.pack(side=tk.BOTTOM, fill=tk.X)
 
         # Parametric sweep configuration variables
@@ -78,7 +84,10 @@ class IonicPropulsionGUI:
         """Load configuration file with proper path resolution for executables"""
         config_paths = [
             'config.json',  # Current directory
-            os.path.join(os.path.dirname(__file__), 'config.json'),  # Script directory
+            os.path.join(
+                os.path.dirname(__file__),
+                'config.json'),
+            # Script directory
         ]
 
         # Add PyInstaller path if available
@@ -94,8 +103,9 @@ class IonicPropulsionGUI:
                 continue
 
         # If no config file found, show warning and use defaults
-        messagebox.showwarning("Configuration Warning",
-                             "Could not find config.json file.\nUsing default configuration.")
+        messagebox.showwarning(
+            "Configuration Warning",
+            "Could not find config.json file.\nUsing default configuration.")
         return self.get_default_config()
 
     def get_default_config(self):
@@ -125,22 +135,34 @@ class IonicPropulsionGUI:
         # File menu
         file_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="File", menu=file_menu)
-        file_menu.add_command(label="Run Parametric Sweep", command=self.run_parametric_sweep)
-        file_menu.add_command(label="Export Results", command=self.export_results)
+        file_menu.add_command(
+            label="Run Parametric Sweep",
+            command=self.run_parametric_sweep)
+        file_menu.add_command(
+            label="Export Results",
+            command=self.export_results)
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self.root.quit)
 
         # Tools menu
         tools_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Tools", menu=tools_menu)
-        tools_menu.add_command(label="Run Diagnostics", command=self.run_diagnostics)
-        tools_menu.add_command(label="View Documentation", command=self.view_documentation)
+        tools_menu.add_command(
+            label="Run Diagnostics",
+            command=self.run_diagnostics)
+        tools_menu.add_command(
+            label="View Documentation",
+            command=self.view_documentation)
 
         # Help menu
         help_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Help", menu=help_menu)
-        help_menu.add_command(label="Physics Guide", command=self.show_physics_guide)
-        help_menu.add_command(label="Parameter Help", command=self.show_parameter_help)
+        help_menu.add_command(
+            label="Physics Guide",
+            command=self.show_physics_guide)
+        help_menu.add_command(
+            label="Parameter Help",
+            command=self.show_parameter_help)
         help_menu.add_command(label="About", command=self.show_about)
 
     def create_main_layout(self):
@@ -163,49 +185,107 @@ class IonicPropulsionGUI:
     def create_parameter_controls(self):
         """Create parameter control panel"""
         # Thruster type selection
-        type_frame = ttk.LabelFrame(self.left_panel, text="🚀 Thruster Type", padding=10)
+        type_frame = ttk.LabelFrame(
+            self.left_panel,
+            text="🚀 Thruster Type",
+            padding=10)
         type_frame.pack(fill=tk.X, pady=(0, 10))
 
         self.thruster_type = tk.StringVar(value="ion")
-        ttk.Radiobutton(type_frame, text="Ion Engine", variable=self.thruster_type,
-                       value="ion", command=self.update_parameter_controls).pack(anchor=tk.W)
-        ttk.Radiobutton(type_frame, text="Hall Thruster", variable=self.thruster_type,
-                       value="hall", command=self.update_parameter_controls).pack(anchor=tk.W)
+        ttk.Radiobutton(
+            type_frame,
+            text="Ion Engine",
+            variable=self.thruster_type,
+            value="ion",
+            command=self.update_parameter_controls).pack(
+            anchor=tk.W)
+        ttk.Radiobutton(
+            type_frame,
+            text="Hall Thruster",
+            variable=self.thruster_type,
+            value="hall",
+            command=self.update_parameter_controls).pack(
+            anchor=tk.W)
 
         # Gas selection
-        gas_frame = ttk.LabelFrame(self.left_panel, text="🌍 Propellant Gas", padding=10)
+        gas_frame = ttk.LabelFrame(
+            self.left_panel,
+            text="🌍 Propellant Gas",
+            padding=10)
         gas_frame.pack(fill=tk.X, pady=(0, 10))
 
         self.gas_var = tk.StringVar(value="Xenon")
-        gas_combo = ttk.Combobox(gas_frame, textvariable=self.gas_var,
-                                values=["Xenon", "Iodine", "Krypton", "Argon", "WaterOH"],
-                                state="readonly")
+        gas_combo = ttk.Combobox(
+            gas_frame,
+            textvariable=self.gas_var,
+            values=[
+                "Xenon",
+                "Iodine",
+                "Krypton",
+                "Argon",
+                "WaterOH"],
+            state="readonly")
         gas_combo.pack(fill=tk.X)
         gas_combo.bind("<<ComboboxSelected>>", self.update_calculations)
 
         # Folder selection
-        folder_frame = ttk.LabelFrame(self.left_panel, text="📁 Input/Output Folders", padding=10)
+        folder_frame = ttk.LabelFrame(
+            self.left_panel,
+            text="📁 Input/Output Folders",
+            padding=10)
         folder_frame.pack(fill=tk.X, pady=(0, 10))
 
         # Input folder
         input_frame = ttk.Frame(folder_frame)
         input_frame.pack(fill=tk.X, pady=(0, 5))
         ttk.Label(input_frame, text="Input Folder:").pack(side=tk.LEFT)
-        ttk.Entry(input_frame, textvariable=self.input_folder, width=30).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(5, 0))
-        ttk.Button(input_frame, text="Browse", command=self.select_input_folder).pack(side=tk.RIGHT)
+        ttk.Entry(
+            input_frame,
+            textvariable=self.input_folder,
+            width=30).pack(
+            side=tk.LEFT,
+            fill=tk.X,
+            expand=True,
+            padx=(
+                5,
+                0))
+        ttk.Button(
+            input_frame,
+            text="Browse",
+            command=self.select_input_folder).pack(
+            side=tk.RIGHT)
 
         # Output folder
         output_frame = ttk.Frame(folder_frame)
         output_frame.pack(fill=tk.X, pady=(0, 5))
         ttk.Label(output_frame, text="Output Folder:").pack(side=tk.LEFT)
-        ttk.Entry(output_frame, textvariable=self.output_folder, width=30).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(5, 0))
-        ttk.Button(output_frame, text="Browse", command=self.select_output_folder).pack(side=tk.RIGHT)
+        ttk.Entry(
+            output_frame,
+            textvariable=self.output_folder,
+            width=30).pack(
+            side=tk.LEFT,
+            fill=tk.X,
+            expand=True,
+            padx=(
+                5,
+                0))
+        ttk.Button(
+            output_frame,
+            text="Browse",
+            command=self.select_output_folder).pack(
+            side=tk.RIGHT)
 
         # Ion Engine parameters
-        self.ion_frame = ttk.LabelFrame(self.left_panel, text="⚡ Ion Engine Parameters", padding=10)
+        self.ion_frame = ttk.LabelFrame(
+            self.left_panel,
+            text="⚡ Ion Engine Parameters",
+            padding=10)
 
         # Hall Thruster parameters
-        self.hall_frame = ttk.LabelFrame(self.left_panel, text="🔄 Hall Thruster Parameters", padding=10)
+        self.hall_frame = ttk.LabelFrame(
+            self.left_panel,
+            text="🔄 Hall Thruster Parameters",
+            padding=10)
 
         # Sweep parameter controls
         self.create_sweep_controls()
@@ -214,83 +294,230 @@ class IonicPropulsionGUI:
         button_frame = ttk.Frame(self.left_panel)
         button_frame.pack(fill=tk.X, pady=(10, 0))
 
-        ttk.Button(button_frame, text="🔄 Update Calculations",
-                  command=self.update_calculations).pack(fill=tk.X, pady=(0, 5))
+        ttk.Button(
+            button_frame,
+            text="🔄 Update Calculations",
+            command=self.update_calculations).pack(
+            fill=tk.X,
+            pady=(
+                0,
+                5))
         ttk.Button(button_frame, text="📊 Run Parametric Sweep",
-                  command=self.run_parametric_sweep).pack(fill=tk.X)
+                   command=self.run_parametric_sweep).pack(fill=tk.X)
 
         self.update_parameter_controls()
 
     def create_sweep_controls(self):
         """Create parametric sweep parameter controls"""
         # Sweep parameters frame
-        self.sweep_frame = ttk.LabelFrame(self.left_panel, text="📊 Parametric Sweep Parameters", padding=10)
+        self.sweep_frame = ttk.LabelFrame(
+            self.left_panel,
+            text="📊 Parametric Sweep Parameters",
+            padding=10)
         self.sweep_frame.pack(fill=tk.X, pady=(0, 10))
 
         # Ion Engine sweep controls
-        ion_sweep_frame = ttk.LabelFrame(self.sweep_frame, text="Ion Engine Sweep Ranges", padding=5)
+        ion_sweep_frame = ttk.LabelFrame(
+            self.sweep_frame,
+            text="Ion Engine Sweep Ranges",
+            padding=5)
         ion_sweep_frame.pack(fill=tk.X, pady=(0, 10))
 
         # Va range controls
-        ttk.Label(ion_sweep_frame, text="Va Range (V):").grid(row=0, column=0, sticky=tk.W, pady=2)
-        ttk.Label(ion_sweep_frame, text="Min:").grid(row=1, column=0, sticky=tk.W)
-        ttk.Label(ion_sweep_frame, text="Max:").grid(row=2, column=0, sticky=tk.W)
-        ttk.Label(ion_sweep_frame, text="Steps:").grid(row=3, column=0, sticky=tk.W)
+        ttk.Label(
+            ion_sweep_frame,
+            text="Va Range (V):").grid(
+            row=0,
+            column=0,
+            sticky=tk.W,
+            pady=2)
+        ttk.Label(
+            ion_sweep_frame,
+            text="Min:").grid(
+            row=1,
+            column=0,
+            sticky=tk.W)
+        ttk.Label(
+            ion_sweep_frame,
+            text="Max:").grid(
+            row=2,
+            column=0,
+            sticky=tk.W)
+        ttk.Label(
+            ion_sweep_frame,
+            text="Steps:").grid(
+            row=3,
+            column=0,
+            sticky=tk.W)
 
-        va_min_entry = ttk.Entry(ion_sweep_frame, textvariable=self.sweep_config['ion_engine']['Va_min'], width=8)
+        va_min_entry = ttk.Entry(
+            ion_sweep_frame,
+            textvariable=self.sweep_config['ion_engine']['Va_min'],
+            width=8)
         va_min_entry.grid(row=1, column=1, padx=5)
-        va_max_entry = ttk.Entry(ion_sweep_frame, textvariable=self.sweep_config['ion_engine']['Va_max'], width=8)
+        va_max_entry = ttk.Entry(
+            ion_sweep_frame,
+            textvariable=self.sweep_config['ion_engine']['Va_max'],
+            width=8)
         va_max_entry.grid(row=2, column=1, padx=5)
-        va_steps_entry = ttk.Entry(ion_sweep_frame, textvariable=self.sweep_config['ion_engine']['Va_steps'], width=8)
+        va_steps_entry = ttk.Entry(
+            ion_sweep_frame,
+            textvariable=self.sweep_config['ion_engine']['Va_steps'],
+            width=8)
         va_steps_entry.grid(row=3, column=1, padx=5)
 
         # Ib range controls
-        ttk.Label(ion_sweep_frame, text="Ib Range (A):").grid(row=0, column=2, sticky=tk.W, pady=2)
-        ttk.Label(ion_sweep_frame, text="Min:").grid(row=1, column=2, sticky=tk.W)
-        ttk.Label(ion_sweep_frame, text="Max:").grid(row=2, column=2, sticky=tk.W)
-        ttk.Label(ion_sweep_frame, text="Steps:").grid(row=3, column=2, sticky=tk.W)
+        ttk.Label(
+            ion_sweep_frame,
+            text="Ib Range (A):").grid(
+            row=0,
+            column=2,
+            sticky=tk.W,
+            pady=2)
+        ttk.Label(
+            ion_sweep_frame,
+            text="Min:").grid(
+            row=1,
+            column=2,
+            sticky=tk.W)
+        ttk.Label(
+            ion_sweep_frame,
+            text="Max:").grid(
+            row=2,
+            column=2,
+            sticky=tk.W)
+        ttk.Label(
+            ion_sweep_frame,
+            text="Steps:").grid(
+            row=3,
+            column=2,
+            sticky=tk.W)
 
-        ib_min_entry = ttk.Entry(ion_sweep_frame, textvariable=self.sweep_config['ion_engine']['Ib_min'], width=8)
+        ib_min_entry = ttk.Entry(
+            ion_sweep_frame,
+            textvariable=self.sweep_config['ion_engine']['Ib_min'],
+            width=8)
         ib_min_entry.grid(row=1, column=3, padx=5)
-        ib_max_entry = ttk.Entry(ion_sweep_frame, textvariable=self.sweep_config['ion_engine']['Ib_max'], width=8)
+        ib_max_entry = ttk.Entry(
+            ion_sweep_frame,
+            textvariable=self.sweep_config['ion_engine']['Ib_max'],
+            width=8)
         ib_max_entry.grid(row=2, column=3, padx=5)
-        ib_steps_entry = ttk.Entry(ion_sweep_frame, textvariable=self.sweep_config['ion_engine']['Ib_steps'], width=8)
+        ib_steps_entry = ttk.Entry(
+            ion_sweep_frame,
+            textvariable=self.sweep_config['ion_engine']['Ib_steps'],
+            width=8)
         ib_steps_entry.grid(row=3, column=3, padx=5)
 
         # Hall Thruster sweep controls
-        hall_sweep_frame = ttk.LabelFrame(self.sweep_frame, text="Hall Thruster Sweep Ranges", padding=5)
+        hall_sweep_frame = ttk.LabelFrame(
+            self.sweep_frame,
+            text="Hall Thruster Sweep Ranges",
+            padding=5)
         hall_sweep_frame.pack(fill=tk.X, pady=(0, 10))
 
         # Vd range controls
-        ttk.Label(hall_sweep_frame, text="Vd Range (V):").grid(row=0, column=0, sticky=tk.W, pady=2)
-        ttk.Label(hall_sweep_frame, text="Min:").grid(row=1, column=0, sticky=tk.W)
-        ttk.Label(hall_sweep_frame, text="Max:").grid(row=2, column=0, sticky=tk.W)
-        ttk.Label(hall_sweep_frame, text="Steps:").grid(row=3, column=0, sticky=tk.W)
+        ttk.Label(
+            hall_sweep_frame,
+            text="Vd Range (V):").grid(
+            row=0,
+            column=0,
+            sticky=tk.W,
+            pady=2)
+        ttk.Label(
+            hall_sweep_frame,
+            text="Min:").grid(
+            row=1,
+            column=0,
+            sticky=tk.W)
+        ttk.Label(
+            hall_sweep_frame,
+            text="Max:").grid(
+            row=2,
+            column=0,
+            sticky=tk.W)
+        ttk.Label(
+            hall_sweep_frame,
+            text="Steps:").grid(
+            row=3,
+            column=0,
+            sticky=tk.W)
 
-        vd_min_entry = ttk.Entry(hall_sweep_frame, textvariable=self.sweep_config['hall_thruster']['Vd_min'], width=8)
+        vd_min_entry = ttk.Entry(
+            hall_sweep_frame,
+            textvariable=self.sweep_config['hall_thruster']['Vd_min'],
+            width=8)
         vd_min_entry.grid(row=1, column=1, padx=5)
-        vd_max_entry = ttk.Entry(hall_sweep_frame, textvariable=self.sweep_config['hall_thruster']['Vd_max'], width=8)
+        vd_max_entry = ttk.Entry(
+            hall_sweep_frame,
+            textvariable=self.sweep_config['hall_thruster']['Vd_max'],
+            width=8)
         vd_max_entry.grid(row=2, column=1, padx=5)
-        vd_steps_entry = ttk.Entry(hall_sweep_frame, textvariable=self.sweep_config['hall_thruster']['Vd_steps'], width=8)
+        vd_steps_entry = ttk.Entry(
+            hall_sweep_frame,
+            textvariable=self.sweep_config['hall_thruster']['Vd_steps'],
+            width=8)
         vd_steps_entry.grid(row=3, column=1, padx=5)
 
         # mdot range controls
-        ttk.Label(hall_sweep_frame, text="ṁ Range (mg/s):").grid(row=0, column=2, sticky=tk.W, pady=2)
-        ttk.Label(hall_sweep_frame, text="Min:").grid(row=1, column=2, sticky=tk.W)
-        ttk.Label(hall_sweep_frame, text="Max:").grid(row=2, column=2, sticky=tk.W)
-        ttk.Label(hall_sweep_frame, text="Steps:").grid(row=3, column=2, sticky=tk.W)
+        ttk.Label(hall_sweep_frame,
+                  text="ṁ Range (mg/s):").grid(row=0,
+                                               column=2,
+                                               sticky=tk.W,
+                                               pady=2)
+        ttk.Label(
+            hall_sweep_frame,
+            text="Min:").grid(
+            row=1,
+            column=2,
+            sticky=tk.W)
+        ttk.Label(
+            hall_sweep_frame,
+            text="Max:").grid(
+            row=2,
+            column=2,
+            sticky=tk.W)
+        ttk.Label(
+            hall_sweep_frame,
+            text="Steps:").grid(
+            row=3,
+            column=2,
+            sticky=tk.W)
 
-        mdot_min_entry = ttk.Entry(hall_sweep_frame, textvariable=self.sweep_config['hall_thruster']['mdot_min'], width=8)
+        mdot_min_entry = ttk.Entry(
+            hall_sweep_frame,
+            textvariable=self.sweep_config['hall_thruster']['mdot_min'],
+            width=8)
         mdot_min_entry.grid(row=1, column=3, padx=5)
-        mdot_max_entry = ttk.Entry(hall_sweep_frame, textvariable=self.sweep_config['hall_thruster']['mdot_max'], width=8)
+        mdot_max_entry = ttk.Entry(
+            hall_sweep_frame,
+            textvariable=self.sweep_config['hall_thruster']['mdot_max'],
+            width=8)
         mdot_max_entry.grid(row=2, column=3, padx=5)
-        mdot_steps_entry = ttk.Entry(hall_sweep_frame, textvariable=self.sweep_config['hall_thruster']['mdot_steps'], width=8)
+        mdot_steps_entry = ttk.Entry(
+            hall_sweep_frame,
+            textvariable=self.sweep_config['hall_thruster']['mdot_steps'],
+            width=8)
         mdot_steps_entry.grid(row=3, column=3, padx=5)
 
         # Add validation for numeric inputs
-        for entry in [va_min_entry, va_max_entry, va_steps_entry, ib_min_entry, ib_max_entry, ib_steps_entry,
-                     vd_min_entry, vd_max_entry, vd_steps_entry, mdot_min_entry, mdot_max_entry, mdot_steps_entry]:
-            entry.configure(validate="key", validatecommand=(self.root.register(self.validate_numeric), "%P"))
+        for entry in [
+                va_min_entry,
+                va_max_entry,
+                va_steps_entry,
+                ib_min_entry,
+                ib_max_entry,
+                ib_steps_entry,
+                vd_min_entry,
+                vd_max_entry,
+                vd_steps_entry,
+                mdot_min_entry,
+                mdot_max_entry,
+                mdot_steps_entry]:
+            entry.configure(
+                validate="key", validatecommand=(
+                    self.root.register(
+                        self.validate_numeric), "%P"))
 
     def update_parameter_controls(self):
         """Update parameter controls based on thruster type"""
@@ -298,7 +525,7 @@ class IonicPropulsionGUI:
         for frame in [self.ion_frame, self.hall_frame]:
             try:
                 frame.pack_forget()
-            except:
+            except BaseException:
                 pass
 
         if self.thruster_type.get() == "ion":
@@ -316,83 +543,124 @@ class IonicPropulsionGUI:
 
         # Acceleration Voltage
         ttk.Label(self.ion_frame, text="Acceleration Voltage (Va)",
-                 font=("Arial", 10, "bold")).pack(anchor=tk.W)
+                  font=("Arial", 10, "bold")).pack(anchor=tk.W)
         va_frame = ttk.Frame(self.ion_frame)
         va_frame.pack(fill=tk.X, pady=(0, 10))
 
         self.va_var = tk.DoubleVar(value=2000)
-        va_scale = ttk.Scale(va_frame, from_=500, to=4000, variable=self.va_var,
-                           orient=tk.HORIZONTAL, command=self.update_calculations)
+        va_scale = ttk.Scale(
+            va_frame,
+            from_=500,
+            to=4000,
+            variable=self.va_var,
+            orient=tk.HORIZONTAL,
+            command=self.update_calculations)
         va_scale.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
         va_label = ttk.Label(va_frame, textvariable=self.va_var, width=8)
         va_label.pack(side=tk.RIGHT)
 
         ttk.Label(self.ion_frame, text="V (volts)",
-                 foreground="blue").pack(anchor=tk.W, padx=(0, 5))
+                  foreground="blue").pack(anchor=tk.W, padx=(0, 5))
 
         # Beam Current
         ttk.Label(self.ion_frame, text="Beam Current (Ib)",
-                 font=("Arial", 10, "bold")).pack(anchor=tk.W)
+                  font=("Arial", 10, "bold")).pack(anchor=tk.W)
         ib_frame = ttk.Frame(self.ion_frame)
         ib_frame.pack(fill=tk.X, pady=(0, 10))
 
         self.ib_var = tk.DoubleVar(value=2.0)
-        ib_scale = ttk.Scale(ib_frame, from_=0.1, to=5.0, variable=self.ib_var,
-                           orient=tk.HORIZONTAL, command=self.update_calculations)
+        ib_scale = ttk.Scale(
+            ib_frame,
+            from_=0.1,
+            to=5.0,
+            variable=self.ib_var,
+            orient=tk.HORIZONTAL,
+            command=self.update_calculations)
         ib_scale.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
         ib_label = ttk.Label(ib_frame, textvariable=self.ib_var, width=8)
         ib_label.pack(side=tk.RIGHT)
 
         ttk.Label(self.ion_frame, text="A (amperes)",
-                 foreground="blue").pack(anchor=tk.W, padx=(0, 5))
+                  foreground="blue").pack(anchor=tk.W, padx=(0, 5))
 
         # Grid Geometry
         ttk.Label(self.ion_frame, text="Grid Parameters",
-                 font=("Arial", 10, "bold")).pack(anchor=tk.W, pady=(10, 5))
+                  font=("Arial", 10, "bold")).pack(anchor=tk.W, pady=(10, 5))
 
         # Geometric Transparency
-        ttk.Label(self.ion_frame, text="Geometric Transparency (τ_geom)").pack(anchor=tk.W)
+        ttk.Label(
+            self.ion_frame,
+            text="Geometric Transparency (τ_geom)").pack(
+            anchor=tk.W)
         tau_geom_frame = ttk.Frame(self.ion_frame)
         tau_geom_frame.pack(fill=tk.X, pady=(0, 5))
 
         self.tau_geom_var = tk.DoubleVar(value=0.7)
-        tau_geom_scale = ttk.Scale(tau_geom_frame, from_=0.5, to=0.9,
-                                 variable=self.tau_geom_var, orient=tk.HORIZONTAL,
-                                 command=self.update_calculations)
+        tau_geom_scale = ttk.Scale(
+            tau_geom_frame,
+            from_=0.5,
+            to=0.9,
+            variable=self.tau_geom_var,
+            orient=tk.HORIZONTAL,
+            command=self.update_calculations)
         tau_geom_scale.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
-        ttk.Label(tau_geom_frame, textvariable=self.tau_geom_var, width=8).pack(side=tk.RIGHT)
+        ttk.Label(
+            tau_geom_frame,
+            textvariable=self.tau_geom_var,
+            width=8).pack(
+            side=tk.RIGHT)
 
         # Transmission Efficiency
-        ttk.Label(self.ion_frame, text="Transmission Efficiency (τ_trans)").pack(anchor=tk.W)
+        ttk.Label(
+            self.ion_frame,
+            text="Transmission Efficiency (τ_trans)").pack(
+            anchor=tk.W)
         tau_trans_frame = ttk.Frame(self.ion_frame)
         tau_trans_frame.pack(fill=tk.X, pady=(0, 5))
 
         self.tau_trans_var = tk.DoubleVar(value=0.95)
-        tau_trans_scale = ttk.Scale(tau_trans_frame, from_=0.8, to=1.0,
-                                  variable=self.tau_trans_var, orient=tk.HORIZONTAL,
-                                  command=self.update_calculations)
+        tau_trans_scale = ttk.Scale(
+            tau_trans_frame,
+            from_=0.8,
+            to=1.0,
+            variable=self.tau_trans_var,
+            orient=tk.HORIZONTAL,
+            command=self.update_calculations)
         tau_trans_scale.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
-        ttk.Label(tau_trans_frame, textvariable=self.tau_trans_var, width=8).pack(side=tk.RIGHT)
+        ttk.Label(
+            tau_trans_frame,
+            textvariable=self.tau_trans_var,
+            width=8).pack(
+            side=tk.RIGHT)
 
         # Divergence Angle
         ttk.Label(self.ion_frame, text="Beam Divergence Angle (σ)",
-                 font=("Arial", 10, "bold")).pack(anchor=tk.W, pady=(10, 5))
+                  font=("Arial", 10, "bold")).pack(anchor=tk.W, pady=(10, 5))
         sigma_frame = ttk.Frame(self.ion_frame)
         sigma_frame.pack(fill=tk.X, pady=(0, 5))
 
         self.sigma_var = tk.DoubleVar(value=5.0)
-        sigma_scale = ttk.Scale(sigma_frame, from_=1, to=45, variable=self.sigma_var,
-                              orient=tk.HORIZONTAL, command=self.update_calculations)
+        sigma_scale = ttk.Scale(
+            sigma_frame,
+            from_=1,
+            to=45,
+            variable=self.sigma_var,
+            orient=tk.HORIZONTAL,
+            command=self.update_calculations)
         sigma_scale.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
-        ttk.Label(sigma_frame, textvariable=self.sigma_var, width=8).pack(side=tk.RIGHT)
+        ttk.Label(
+            sigma_frame,
+            textvariable=self.sigma_var,
+            width=8).pack(
+            side=tk.RIGHT)
 
         ttk.Label(self.ion_frame, text="degrees (°) - RMS half-angle",
-                 foreground="blue").pack(anchor=tk.W, padx=(0, 5))
+                  foreground="blue").pack(anchor=tk.W, padx=(0, 5))
 
     def create_hall_controls(self):
         """Create Hall thruster parameter controls"""
@@ -404,80 +672,120 @@ class IonicPropulsionGUI:
 
         # Discharge Voltage
         ttk.Label(self.hall_frame, text="Discharge Voltage (Vd)",
-                 font=("Arial", 10, "bold")).pack(anchor=tk.W)
+                  font=("Arial", 10, "bold")).pack(anchor=tk.W)
         vd_frame = ttk.Frame(self.hall_frame)
         vd_frame.pack(fill=tk.X, pady=(0, 10))
 
         self.vd_var = tk.DoubleVar(value=400)
-        vd_scale = ttk.Scale(vd_frame, from_=200, to=800, variable=self.vd_var,
-                           orient=tk.HORIZONTAL, command=self.update_calculations)
+        vd_scale = ttk.Scale(
+            vd_frame,
+            from_=200,
+            to=800,
+            variable=self.vd_var,
+            orient=tk.HORIZONTAL,
+            command=self.update_calculations)
         vd_scale.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
         vd_label = ttk.Label(vd_frame, textvariable=self.vd_var, width=8)
         vd_label.pack(side=tk.RIGHT)
 
         ttk.Label(self.hall_frame, text="V (volts)",
-                 foreground="blue").pack(anchor=tk.W, padx=(0, 5))
+                  foreground="blue").pack(anchor=tk.W, padx=(0, 5))
 
         # Mass Flow Rate
         ttk.Label(self.hall_frame, text="Mass Flow Rate (ṁ)",
-                 font=("Arial", 10, "bold")).pack(anchor=tk.W)
+                  font=("Arial", 10, "bold")).pack(anchor=tk.W)
         mdot_frame = ttk.Frame(self.hall_frame)
         mdot_frame.pack(fill=tk.X, pady=(0, 10))
 
         self.mdot_var = tk.DoubleVar(value=5.0)
-        mdot_scale = ttk.Scale(mdot_frame, from_=1, to=10, variable=self.mdot_var,
-                             orient=tk.HORIZONTAL, command=self.update_calculations)
+        mdot_scale = ttk.Scale(
+            mdot_frame,
+            from_=1,
+            to=10,
+            variable=self.mdot_var,
+            orient=tk.HORIZONTAL,
+            command=self.update_calculations)
         mdot_scale.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
         mdot_label = ttk.Label(mdot_frame, textvariable=self.mdot_var, width=8)
         mdot_label.pack(side=tk.RIGHT)
 
         ttk.Label(self.hall_frame, text="mg/s (milligrams per second)",
-                 foreground="blue").pack(anchor=tk.W, padx=(0, 5))
+                  foreground="blue").pack(anchor=tk.W, padx=(0, 5))
 
         # Acceleration Efficiency
-        ttk.Label(self.hall_frame, text="Acceleration Efficiency (η_acc)").pack(anchor=tk.W)
+        ttk.Label(
+            self.hall_frame,
+            text="Acceleration Efficiency (η_acc)").pack(
+            anchor=tk.W)
         eta_acc_frame = ttk.Frame(self.hall_frame)
         eta_acc_frame.pack(fill=tk.X, pady=(0, 5))
 
         self.eta_acc_var = tk.DoubleVar(value=0.6)
-        eta_acc_scale = ttk.Scale(eta_acc_frame, from_=0.4, to=0.8,
-                                variable=self.eta_acc_var, orient=tk.HORIZONTAL,
-                                command=self.update_calculations)
+        eta_acc_scale = ttk.Scale(
+            eta_acc_frame,
+            from_=0.4,
+            to=0.8,
+            variable=self.eta_acc_var,
+            orient=tk.HORIZONTAL,
+            command=self.update_calculations)
         eta_acc_scale.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
-        ttk.Label(eta_acc_frame, textvariable=self.eta_acc_var, width=8).pack(side=tk.RIGHT)
+        ttk.Label(
+            eta_acc_frame,
+            textvariable=self.eta_acc_var,
+            width=8).pack(
+            side=tk.RIGHT)
 
         # Propellant Utilization
-        ttk.Label(self.hall_frame, text="Propellant Utilization (τ_prop)").pack(anchor=tk.W)
+        ttk.Label(
+            self.hall_frame,
+            text="Propellant Utilization (τ_prop)").pack(
+            anchor=tk.W)
         tau_prop_frame = ttk.Frame(self.hall_frame)
         tau_prop_frame.pack(fill=tk.X, pady=(0, 5))
 
         self.tau_prop_var = tk.DoubleVar(value=0.85)
-        tau_prop_scale = ttk.Scale(tau_prop_frame, from_=0.7, to=0.95,
-                                 variable=self.tau_prop_var, orient=tk.HORIZONTAL,
-                                 command=self.update_calculations)
+        tau_prop_scale = ttk.Scale(
+            tau_prop_frame,
+            from_=0.7,
+            to=0.95,
+            variable=self.tau_prop_var,
+            orient=tk.HORIZONTAL,
+            command=self.update_calculations)
         tau_prop_scale.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
-        ttk.Label(tau_prop_frame, textvariable=self.tau_prop_var, width=8).pack(side=tk.RIGHT)
+        ttk.Label(
+            tau_prop_frame,
+            textvariable=self.tau_prop_var,
+            width=8).pack(
+            side=tk.RIGHT)
 
         # Divergence Angle
         ttk.Label(self.hall_frame, text="Beam Divergence Angle",
-                 font=("Arial", 10, "bold")).pack(anchor=tk.W, pady=(10, 5))
+                  font=("Arial", 10, "bold")).pack(anchor=tk.W, pady=(10, 5))
         hall_sigma_frame = ttk.Frame(self.hall_frame)
         hall_sigma_frame.pack(fill=tk.X, pady=(0, 5))
 
         self.hall_sigma_var = tk.DoubleVar(value=30.0)
-        hall_sigma_scale = ttk.Scale(hall_sigma_frame, from_=10, to=60,
-                                   variable=self.hall_sigma_var, orient=tk.HORIZONTAL,
-                                   command=self.update_calculations)
+        hall_sigma_scale = ttk.Scale(
+            hall_sigma_frame,
+            from_=10,
+            to=60,
+            variable=self.hall_sigma_var,
+            orient=tk.HORIZONTAL,
+            command=self.update_calculations)
         hall_sigma_scale.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
-        ttk.Label(hall_sigma_frame, textvariable=self.hall_sigma_var, width=8).pack(side=tk.RIGHT)
+        ttk.Label(
+            hall_sigma_frame,
+            textvariable=self.hall_sigma_var,
+            width=8).pack(
+            side=tk.RIGHT)
 
         ttk.Label(self.hall_frame, text="degrees (°) - Full cone angle",
-                 foreground="blue").pack(anchor=tk.W, padx=(0, 5))
+                  foreground="blue").pack(anchor=tk.W, padx=(0, 5))
 
     def create_results_display(self):
         """Create results display panel"""
@@ -506,11 +814,13 @@ class IonicPropulsionGUI:
     def create_realtime_results(self, parent):
         """Create real-time results display"""
         # Results display
-        results_frame = ttk.LabelFrame(parent, text="📈 Current Performance Metrics", padding=10)
+        results_frame = ttk.LabelFrame(
+            parent, text="📈 Current Performance Metrics", padding=10)
         results_frame.pack(fill=tk.BOTH, expand=True)
 
         # Create scrollable text area for results
-        self.results_text = scrolledtext.ScrolledText(results_frame, height=20, font=("Consolas", 10))
+        self.results_text = scrolledtext.ScrolledText(
+            results_frame, height=20, font=("Consolas", 10))
         self.results_text.pack(fill=tk.BOTH, expand=True)
 
         # Initial results
@@ -518,7 +828,8 @@ class IonicPropulsionGUI:
 
     def create_physics_guide(self, parent):
         """Create physics explanations panel"""
-        physics_text = scrolledtext.ScrolledText(parent, font=("Arial", 10), wrap=tk.WORD)
+        physics_text = scrolledtext.ScrolledText(
+            parent, font=("Arial", 10), wrap=tk.WORD)
         physics_text.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
         physics_content = """
@@ -642,7 +953,8 @@ For detailed documentation, see README.md and USER_GUIDE.md
 
     def create_plot_area(self, parent):
         """Create interactive plot area"""
-        plot_frame = ttk.LabelFrame(parent, text="📈 Performance Visualization", padding=10)
+        plot_frame = ttk.LabelFrame(
+            parent, text="📈 Performance Visualization", padding=10)
         plot_frame.pack(fill=tk.BOTH, expand=True)
 
         # Plot controls
@@ -651,18 +963,32 @@ For detailed documentation, see README.md and USER_GUIDE.md
 
         ttk.Label(control_frame, text="X-axis:").pack(side=tk.LEFT, padx=(0, 5))
         self.x_var = tk.StringVar(value="Va")
-        x_combo = ttk.Combobox(control_frame, textvariable=self.x_var,
-                              values=["Va", "Ib", "T_axial", "Isp_eff"], width=10)
+        x_combo = ttk.Combobox(
+            control_frame,
+            textvariable=self.x_var,
+            values=[
+                "Va",
+                "Ib",
+                "T_axial",
+                "Isp_eff"],
+            width=10)
         x_combo.pack(side=tk.LEFT, padx=(0, 10))
 
         ttk.Label(control_frame, text="Y-axis:").pack(side=tk.LEFT, padx=(0, 5))
         self.y_var = tk.StringVar(value="T_axial")
-        y_combo = ttk.Combobox(control_frame, textvariable=self.y_var,
-                              values=["T_axial", "Isp_eff", "P_elec", "perveance_margin"], width=10)
+        y_combo = ttk.Combobox(
+            control_frame,
+            textvariable=self.y_var,
+            values=[
+                "T_axial",
+                "Isp_eff",
+                "P_elec",
+                "perveance_margin"],
+            width=10)
         y_combo.pack(side=tk.LEFT, padx=(0, 10))
 
         ttk.Button(control_frame, text="🔄 Update Plot",
-                  command=self.update_plot).pack(side=tk.LEFT)
+                   command=self.update_plot).pack(side=tk.LEFT)
 
         # Plot canvas
         self.figure, self.ax = plt.subplots(figsize=(8, 6))
@@ -680,7 +1006,7 @@ For detailed documentation, see README.md and USER_GUIDE.md
             self.status_var.set("✅ Calculator initialized successfully")
         except Exception as e:
             messagebox.showerror("Initialization Error",
-                               f"Could not initialize calculator: {e}")
+                                 f"Could not initialize calculator: {e}")
             self.status_var.set("❌ Calculator initialization failed")
 
     def update_calculations(self, *args):
@@ -748,7 +1074,7 @@ For detailed documentation, see README.md and USER_GUIDE.md
 🔬 PHYSICS CALCULATIONS:
 
 IDEAL PERFORMANCE (No Losses):
-   • Ideal Thrust: {result['T_ideal']*1000:.1f} mN
+   • Ideal Thrust: {result['T_ideal'] * 1000:.1f} mN
    • Exhaust Velocity: {result['v_e0']:.0f} m/s
 
 SPACE-CHARGE ANALYSIS:
@@ -758,15 +1084,15 @@ SPACE-CHARGE ANALYSIS:
    • Space-charge Factor: {result['tau_imp']:.3f}
 
 ACTUAL PERFORMANCE (With Losses):
-   • Effective Thrust: {result['T_axial']*1000:.1f} mN
+   • Effective Thrust: {result['T_axial'] * 1000:.1f} mN
    • Effective Isp: {result['Isp_eff']:.1f} s
    • Electrical Power: {result['P_elec']:.0f} W
-   • Mass Flow Rate: {result['mdot']*1000:.1f} mg/s
+   • Mass Flow Rate: {result['mdot'] * 1000:.1f} mg/s
 
 EFFICIENCY ANALYSIS:
-   • Thrust Efficiency: {(result['T_axial']/result['T_ideal'])*100:.1f}%
+   • Thrust Efficiency: {(result['T_axial'] / result['T_ideal']) * 100:.1f}%
    • Divergence Efficiency: {result['eta_div']:.3f}
-   • Overall Efficiency: {result['eta_div']*result['tau_geom']*result['tau_trans']*result['tau_imp']:.3f}
+   • Overall Efficiency: {result['eta_div'] * result['tau_geom'] * result['tau_trans'] * result['tau_imp']:.3f}
 
 ⚠️  INTERPRETATION:
    • Perveance > 1.0: Operating below space-charge limit
@@ -782,7 +1108,8 @@ EFFICIENCY ANALYSIS:
         """
 
         self.results_text.insert(tk.END, output)
-        self.status_var.set(f"✅ Ion engine calculation complete - Thrust: {result['T_axial']*1000:.1f} mN")
+        self.status_var.set(
+            f"✅ Ion engine calculation complete - Thrust: {result['T_axial'] * 1000:.1f} mN")
 
     def display_hall_results(self, result):
         """Display Hall thruster calculation results"""
@@ -797,7 +1124,7 @@ EFFICIENCY ANALYSIS:
 📊 INPUT PARAMETERS:
    • Gas: {result['gas']}
    • Discharge Voltage: {result['Vd']:.0f} V
-   • Mass Flow Rate: {result['mdot']*1000:.1f} mg/s
+   • Mass Flow Rate: {result['mdot'] * 1000:.1f} mg/s
    • Acceleration Efficiency: {result['eta_div']:.3f}
    • Propellant Utilization: {result['tau_prop']:.3f}
    • Divergence Angle: {result['eta_div']:.1f}°
@@ -805,7 +1132,7 @@ EFFICIENCY ANALYSIS:
 🔬 PHYSICS CALCULATIONS:
 
 PERFORMANCE METRICS:
-   • Thrust: {result['T_axial']*1000:.1f} mN
+   • Thrust: {result['T_axial'] * 1000:.1f} mN
    • Specific Impulse: {result['Isp_ax']:.1f} s
    • Exhaust Velocity: {result['v_e0']:.0f} m/s
    • Electrical Power: {result['P_elec']:.0f} W
@@ -813,7 +1140,7 @@ PERFORMANCE METRICS:
 
 EFFICIENCY ANALYSIS:
    • Divergence Efficiency: {result['eta_div']:.3f}
-   • Overall Efficiency: {result['eta_div']*result['tau_prop']:.3f}
+   • Overall Efficiency: {result['eta_div'] * result['tau_prop']:.3f}
 
 ⚠️  INTERPRETATION:
    • Higher discharge voltage increases Isp
@@ -829,7 +1156,8 @@ EFFICIENCY ANALYSIS:
         """
 
         self.results_text.insert(tk.END, output)
-        self.status_var.set(f"✅ Hall thruster calculation complete - Thrust: {result['T_axial']*1000:.1f} mN")
+        self.status_var.set(
+            f"✅ Hall thruster calculation complete - Thrust: {result['T_axial'] * 1000:.1f} mN")
 
     def update_plot(self):
         """Update the interactive plot"""
@@ -913,10 +1241,17 @@ EFFICIENCY ANALYSIS:
                     y_plot = [1.0] * len(thrusts)
                 y_label = "Perveance Margin"
 
-            self.ax.plot(x_plot, y_plot, 'b-', linewidth=2, marker='o', markersize=3)
+            self.ax.plot(
+                x_plot,
+                y_plot,
+                'b-',
+                linewidth=2,
+                marker='o',
+                markersize=3)
             self.ax.set_xlabel(x_label)
             self.ax.set_ylabel(y_label)
-            self.ax.set_title(f"{self.thruster_type.get().title()} Performance: {y_var} vs {x_var}")
+            self.ax.set_title(
+                f"{self.thruster_type.get().title()} Performance: {y_var} vs {x_var}")
             self.ax.grid(True, alpha=0.3)
 
             self.figure.tight_layout()
@@ -925,7 +1260,7 @@ EFFICIENCY ANALYSIS:
         except Exception as e:
             self.ax.clear()
             self.ax.text(0.5, 0.5, f"Plot Error:\n{str(e)}",
-                        ha='center', va='center', transform=self.ax.transAxes)
+                         ha='center', va='center', transform=self.ax.transAxes)
             self.canvas.draw()
 
     def run_parametric_sweep(self):
@@ -938,7 +1273,8 @@ EFFICIENCY ANALYSIS:
                 sweep_config = self.create_sweep_config()
 
                 # Save temporary config file
-                temp_config_path = os.path.join(os.getcwd(), 'temp_sweep_config.json')
+                temp_config_path = os.path.join(
+                    os.getcwd(), 'temp_sweep_config.json')
                 with open(temp_config_path, 'w') as f:
                     json.dump(sweep_config, f, indent=2)
 
@@ -949,26 +1285,33 @@ EFFICIENCY ANALYSIS:
                 env['IONIC_SWEEP_CONFIG'] = temp_config_path
                 env['IONIC_OUTPUT_FOLDER'] = self.output_folder.get()
 
-                result = subprocess.run([sys.executable, 'run_sweep.py'],
-                                      capture_output=True, text=True, cwd=os.path.dirname(__file__) or os.getcwd(), env=env)
+                result = subprocess.run([sys.executable,
+                                         'run_sweep.py'],
+                                        capture_output=True,
+                                        text=True,
+                                        cwd=os.path.dirname(__file__) or os.getcwd(),
+                                        env=env)
 
                 # Clean up temporary config
                 if os.path.exists(temp_config_path):
                     os.remove(temp_config_path)
 
                 if result.returncode == 0:
-                    self.status_var.set("✅ Parametric sweep completed successfully!")
+                    self.status_var.set(
+                        "✅ Parametric sweep completed successfully!")
                     output_folder_name = self.output_folder.get()
                     messagebox.showinfo("Success",
-                                      f"Parametric sweep completed!\n\n"
-                                      f"Results saved to {output_folder_name} folder:\n"
-                                      "• ion_sweep.csv\n"
-                                      "• hall_sweep.csv\n"
-                                      "• 9 professional plots")
+                                        f"Parametric sweep completed!\n\n"
+                                        f"Results saved to {output_folder_name} folder:\n"
+                                        "• ion_sweep.csv\n"
+                                        "• hall_sweep.csv\n"
+                                        "• 9 professional plots")
                 else:
                     self.status_var.set("❌ Parametric sweep failed")
-                    messagebox.showerror("Sweep Failed",
-                                       f"Parametric sweep failed:\n{result.stderr}")
+                    messagebox.showerror(
+                        "Sweep Failed",
+                        f"Parametric sweep failed:\n{
+                            result.stderr}")
 
             except Exception as e:
                 self.status_var.set("❌ Parametric sweep error")
@@ -988,9 +1331,9 @@ EFFICIENCY ANALYSIS:
                 "gas_masses": {self.gas_var.get(): self.config['gas_masses'][self.gas_var.get()]},
                 "ion_engine": {
                     "Va_range": [self.sweep_config['ion_engine']['Va_min'].get(),
-                               self.sweep_config['ion_engine']['Va_max'].get()],
+                                 self.sweep_config['ion_engine']['Va_max'].get()],
                     "Ib_range": [self.sweep_config['ion_engine']['Ib_min'].get(),
-                               self.sweep_config['ion_engine']['Ib_max'].get()],
+                                 self.sweep_config['ion_engine']['Ib_max'].get()],
                     "Va_steps": self.sweep_config['ion_engine']['Va_steps'].get(),
                     "Ib_steps": self.sweep_config['ion_engine']['Ib_steps'].get(),
                     "geometry": self.config['ion_engine']['geometry'],
@@ -1012,9 +1355,9 @@ EFFICIENCY ANALYSIS:
                 "ion_engine": self.config['ion_engine'],
                 "hall_thruster": {
                     "Vd_range": [self.sweep_config['hall_thruster']['Vd_min'].get(),
-                               self.sweep_config['hall_thruster']['Vd_max'].get()],
+                                 self.sweep_config['hall_thruster']['Vd_max'].get()],
                     "mdot_range": [self.sweep_config['hall_thruster']['mdot_min'].get(),
-                                 self.sweep_config['hall_thruster']['mdot_max'].get()],
+                                   self.sweep_config['hall_thruster']['mdot_max'].get()],
                     "Vd_steps": self.sweep_config['hall_thruster']['Vd_steps'].get(),
                     "mdot_steps": self.sweep_config['hall_thruster']['mdot_steps'].get(),
                     "eta_acc": self.eta_acc_var.get(),
@@ -1054,7 +1397,9 @@ EFFICIENCY ANALYSIS:
     def export_results(self):
         """Export current results to file"""
         if not self.current_results:
-            messagebox.showwarning("No Results", "No results to export. Run calculations first.")
+            messagebox.showwarning(
+                "No Results",
+                "No results to export. Run calculations first.")
             return
 
         try:
@@ -1069,29 +1414,37 @@ EFFICIENCY ANALYSIS:
                     json.dump(self.current_results, f, indent=2)
 
                 messagebox.showinfo("Export Complete",
-                                  f"Results exported to:\n{filename}")
+                                    f"Results exported to:\n{filename}")
 
         except Exception as e:
-            messagebox.showerror("Export Error", f"Could not export results: {e}")
+            messagebox.showerror(
+                "Export Error",
+                f"Could not export results: {e}")
 
     def run_diagnostics(self):
         """Run system diagnostics"""
         try:
-            result = subprocess.run([sys.executable, 'diagnostics.py'],
-                                  capture_output=True, text=True, cwd=os.getcwd())
+            result = subprocess.run([sys.executable,
+                                     'diagnostics.py'],
+                                    capture_output=True,
+                                    text=True,
+                                    cwd=os.getcwd())
 
             if result.returncode == 0:
-                messagebox.showinfo("Diagnostics Complete",
-                                  "System diagnostics completed successfully!\n\n"
-                                  "All components are working properly.")
+                messagebox.showinfo(
+                    "Diagnostics Complete",
+                    "System diagnostics completed successfully!\n\n"
+                    "All components are working properly.")
             else:
-                messagebox.showwarning("Diagnostics Issues",
-                                     f"Some issues detected:\n{result.stderr}")
+                messagebox.showwarning(
+                    "Diagnostics Issues",
+                    f"Some issues detected:\n{
+                        result.stderr}")
 
         except Exception as e:
-            messagebox.showerror("Diagnostics Error", f"Could not run diagnostics: {e}")
-
-
+            messagebox.showerror(
+                "Diagnostics Error",
+                f"Could not run diagnostics: {e}")
 
     def view_documentation(self):
         """Open documentation files"""
@@ -1108,11 +1461,12 @@ EFFICIENCY ANALYSIS:
                         subprocess.run(['xdg-open', doc])
                 except Exception as e:
                     messagebox.showerror("Documentation Error",
-                                       f"Could not open {doc}: {e}")
+                                         f"Could not open {doc}: {e}")
                 break
         else:
-            messagebox.showwarning("Documentation Not Found",
-                                 "Documentation files not found in current directory.")
+            messagebox.showwarning(
+                "Documentation Not Found",
+                "Documentation files not found in current directory.")
 
     def show_physics_guide(self):
         """Show physics guide dialog"""
@@ -1208,12 +1562,17 @@ For detailed physics equations, see the Physics Guide tab.
         help_window.title("Parameter Help - Ionic Propulsion Lab")
         help_window.geometry("800x600")
 
-        help_text_widget = scrolledtext.ScrolledText(help_window, font=("Arial", 10), wrap=tk.WORD)
+        help_text_widget = scrolledtext.ScrolledText(
+            help_window, font=("Arial", 10), wrap=tk.WORD)
         help_text_widget.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         help_text_widget.insert(tk.END, help_text)
         help_text_widget.config(state=tk.DISABLED)
 
-        ttk.Button(help_window, text="Close", command=help_window.destroy).pack(pady=10)
+        ttk.Button(
+            help_window,
+            text="Close",
+            command=help_window.destroy).pack(
+            pady=10)
 
     def show_about(self):
         """Show about dialog"""
@@ -1255,11 +1614,13 @@ For questions or issues, check the documentation first.
 
         messagebox.showinfo("About Ionic Propulsion Lab", about_text)
 
+
 def main():
     """Main application entry point"""
     root = tk.Tk()
     app = IonicPropulsionGUI(root)
     root.mainloop()
+
 
 if __name__ == "__main__":
     main()

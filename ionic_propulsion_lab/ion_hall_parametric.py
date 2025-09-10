@@ -3,10 +3,12 @@ import json
 import math
 import sys
 
+
 class PropulsionCalculator:
     def __init__(self, config_path=None):
         if config_path is None:
-            # Default to config.json with proper path resolution for executables
+            # Default to config.json with proper path resolution for
+            # executables
             import os
             script_dir = os.path.dirname(os.path.abspath(__file__))
             config_paths = [
@@ -16,7 +18,9 @@ class PropulsionCalculator:
 
             # Add PyInstaller path if available
             if hasattr(sys, '_MEIPASS'):
-                config_paths.insert(0, os.path.join(sys._MEIPASS, 'config.json'))
+                config_paths.insert(
+                    0, os.path.join(
+                        sys._MEIPASS, 'config.json'))
 
             config_path = None
             for path in config_paths:
@@ -25,7 +29,8 @@ class PropulsionCalculator:
                     break
 
             if config_path is None:
-                raise FileNotFoundError("Could not find config.json file. Please ensure it exists in the application directory.")
+                raise FileNotFoundError(
+                    "Could not find config.json file. Please ensure it exists in the application directory.")
 
         with open(config_path, 'r') as f:
             self.config = json.load(f)
@@ -51,9 +56,10 @@ class PropulsionCalculator:
         """Calculate Child-Langmuir space-charge limited current density"""
         epsilon_0 = 8.854e-12  # F/m
 
-        # Child-Langmuir current density: J_CL = (4/9)ε₀ √(2q/m_i) * (V_a^(3/2) / d²)
-        prefactor = (4.0/9.0) * epsilon_0 * np.sqrt(2 * q / m_i)
-        J_CL = prefactor * (Va**(3/2)) / (d**2)
+        # Child-Langmuir current density: J_CL = (4/9)ε₀ √(2q/m_i) * (V_a^(3/2)
+        # / d²)
+        prefactor = (4.0 / 9.0) * epsilon_0 * np.sqrt(2 * q / m_i)
+        J_CL = prefactor * (Va**(3 / 2)) / (d**2)
 
         # Space-charge limited current
         I_CL = J_CL * A_open
@@ -67,7 +73,17 @@ class PropulsionCalculator:
         else:
             return I_CL / Ib  # Current limited by space charge
 
-    def calculate_ion_engine(self, Va, Ib, gas, A_grid, d, tau_geom, tau_trans, divergence_model, sigma_deg):
+    def calculate_ion_engine(
+            self,
+            Va,
+            Ib,
+            gas,
+            A_grid,
+            d,
+            tau_geom,
+            tau_trans,
+            divergence_model,
+            sigma_deg):
         """Calculate ion engine performance metrics with enhanced physics"""
         m_i = self.gas_masses[gas] * self.constants['amu']  # kg
         q = self.constants['q']  # C
@@ -91,13 +107,15 @@ class PropulsionCalculator:
         Ib_eff = Ib * tau_geom * tau_trans * tau_imp
 
         # Divergence efficiency
-        eta_div = self.calculate_divergence_efficiency(divergence_model, sigma_deg, 'ion')
+        eta_div = self.calculate_divergence_efficiency(
+            divergence_model, sigma_deg, 'ion')
 
         # Effective thrust with all losses
         T_axial = T_ideal * tau_geom * tau_trans * tau_imp * eta_div
 
         # Effective specific impulse
-        Isp_eff = (v_e0 / self.constants['g0']) * tau_geom * tau_trans * tau_imp * eta_div
+        Isp_eff = (v_e0 / self.constants['g0']) * \
+            tau_geom * tau_trans * tau_imp * eta_div
 
         # Electrical power
         P_elec = Va * Ib
@@ -130,7 +148,15 @@ class PropulsionCalculator:
             'thruster_type': 'ion'
         }
 
-    def calculate_hall_thruster(self, Vd, mdot, gas, eta_acc, tau_prop, divergence_model, divergence_param):
+    def calculate_hall_thruster(
+            self,
+            Vd,
+            mdot,
+            gas,
+            eta_acc,
+            tau_prop,
+            divergence_model,
+            divergence_param):
         """Calculate Hall thruster performance metrics"""
         m_i = self.gas_masses[gas] * self.constants['amu']  # kg
         q = self.constants['q']  # C
@@ -139,7 +165,8 @@ class PropulsionCalculator:
         v_e0 = np.sqrt(eta_acc * 2 * q * Vd / m_i)
 
         # Divergence efficiency
-        eta_div = self.calculate_divergence_efficiency(divergence_model, divergence_param, 'hall')
+        eta_div = self.calculate_divergence_efficiency(
+            divergence_model, divergence_param, 'hall')
 
         # Axial thrust
         T_axial = mdot * tau_prop * v_e0 * eta_div
@@ -169,8 +196,14 @@ class PropulsionCalculator:
     def parametric_sweep_ion(self):
         """Perform parametric sweep for ion engine with enhanced physics"""
         ion_config = self.config['ion_engine']
-        Va_range = np.linspace(ion_config['Va_range'][0], ion_config['Va_range'][1], ion_config['Va_steps'])
-        Ib_range = np.logspace(np.log10(ion_config['Ib_range'][0]), np.log10(ion_config['Ib_range'][1]), ion_config['Ib_steps'])
+        Va_range = np.linspace(
+            ion_config['Va_range'][0],
+            ion_config['Va_range'][1],
+            ion_config['Va_steps'])
+        Ib_range = np.logspace(
+            np.log10(
+                ion_config['Ib_range'][0]), np.log10(
+                ion_config['Ib_range'][1]), ion_config['Ib_steps'])
 
         # Extract geometry and loss parameters
         A_grid = ion_config['geometry']['A_grid']
@@ -185,8 +218,7 @@ class PropulsionCalculator:
             for Va in Va_range:
                 for Ib in Ib_range:
                     result = self.calculate_ion_engine(
-                        Va, Ib, gas, A_grid, d, tau_geom, tau_trans, div_model, sigma_deg
-                    )
+                        Va, Ib, gas, A_grid, d, tau_geom, tau_trans, div_model, sigma_deg)
                     results.append(result)
 
         return results
@@ -194,8 +226,14 @@ class PropulsionCalculator:
     def parametric_sweep_hall(self):
         """Perform parametric sweep for Hall thruster"""
         hall_config = self.config['hall_thruster']
-        Vd_range = np.linspace(hall_config['Vd_range'][0], hall_config['Vd_range'][1], hall_config['Vd_steps'])
-        mdot_range = np.logspace(np.log10(hall_config['mdot_range'][0]), np.log10(hall_config['mdot_range'][1]), hall_config['mdot_steps'])
+        Vd_range = np.linspace(
+            hall_config['Vd_range'][0],
+            hall_config['Vd_range'][1],
+            hall_config['Vd_steps'])
+        mdot_range = np.logspace(
+            np.log10(
+                hall_config['mdot_range'][0]), np.log10(
+                hall_config['mdot_range'][1]), hall_config['mdot_steps'])
 
         results = []
         for gas in self.gases:
@@ -220,6 +258,7 @@ class PropulsionCalculator:
         self.gas_masses = self.config['gas_masses']
         print("✅ Calculator configuration updated")
 
+
 if __name__ == "__main__":
     calc = PropulsionCalculator()
     print("Enhanced Ion Engine Example (Xenon, 2000V, 2A):")
@@ -236,13 +275,18 @@ if __name__ == "__main__":
         ion_config['divergence']['sigma_deg']
     )
 
-    print(f"Ideal Thrust: {ion_result['T_ideal']*1000:.1f} mN")
-    print(f"Effective Thrust: {ion_result['T_axial']*1000:.1f} mN")
+    print(f"Ideal Thrust: {ion_result['T_ideal'] * 1000:.1f} mN")
+    print(f"Effective Thrust: {ion_result['T_axial'] * 1000:.1f} mN")
     print(f"Effective Isp: {ion_result['Isp_eff']:.1f} s")
     print(f"Space-charge limit: {ion_result['I_CL']:.2f} A")
     print(f"Perveance margin: {ion_result['perveance_margin']:.2f}")
     print(f"Divergence efficiency: {ion_result['eta_div']:.3f}")
 
     print("\nHall Thruster Example (Xenon, 400V, 5 mg/s):")
-    hall_result = calc.calculate_hall_thruster(400, 5e-6, 'Xenon', 0.6, 0.85, 'cos', 30.0)
-    print(f"Thrust: {hall_result['T_axial']*1000:.1f} mN, Isp: {hall_result['Isp_ax']:.1f} s")
+    hall_result = calc.calculate_hall_thruster(
+        400, 5e-6, 'Xenon', 0.6, 0.85, 'cos', 30.0)
+    print(
+        f"Thrust: {
+            hall_result['T_axial'] *
+            1000:.1f} mN, Isp: {
+            hall_result['Isp_ax']:.1f} s")

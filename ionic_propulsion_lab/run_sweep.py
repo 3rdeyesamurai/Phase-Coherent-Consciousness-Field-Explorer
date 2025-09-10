@@ -5,6 +5,7 @@ import json
 from ion_hall_parametric import PropulsionCalculator
 import os
 
+
 def save_to_csv(results, filename):
     """Save results to CSV file"""
     # Ensure output directory exists
@@ -25,6 +26,7 @@ def save_to_csv(results, filename):
     except Exception as e:
         print(f"[ERROR] Error saving CSV to {filename}: {e}")
         return False
+
 
 def create_plots(results, thruster_type, output_dir='output'):
     """Create static plots for the results"""
@@ -49,9 +51,16 @@ def create_plots(results, thruster_type, output_dir='output'):
     plt.figure(figsize=(12, 8))
     for gas in gases:
         gas_data = df[df['gas'] == gas]
-        # Group by voltage and take mean thrust (averaging over other parameters)
+        # Group by voltage and take mean thrust (averaging over other
+        # parameters)
         grouped = gas_data.groupby(x_var)['T_axial'].mean()
-        plt.plot(grouped.index, grouped.values * 1000, label=gas, marker='o', markersize=3)
+        plt.plot(
+            grouped.index,
+            grouped.values *
+            1000,
+            label=gas,
+            marker='o',
+            markersize=3)
 
     plt.xlabel(x_label)
     plt.ylabel('Axial Thrust (mN)')
@@ -59,7 +68,10 @@ def create_plots(results, thruster_type, output_dir='output'):
     plt.legend()
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
-    plt.savefig(f'{output_dir}/{thruster_type}_thrust_vs_V.png', dpi=300, bbox_inches='tight')
+    plt.savefig(
+        f'{output_dir}/{thruster_type}_thrust_vs_V.png',
+        dpi=300,
+        bbox_inches='tight')
     plt.close()
 
     # Plot 2: Isp vs Voltage for each gas
@@ -69,7 +81,12 @@ def create_plots(results, thruster_type, output_dir='output'):
         # Use appropriate Isp column based on thruster type
         isp_col = 'Isp_eff' if thruster_type == 'ion' else 'Isp_ax'
         grouped = gas_data.groupby(x_var)[isp_col].mean()
-        plt.plot(grouped.index, grouped.values, label=gas, marker='s', markersize=3)
+        plt.plot(
+            grouped.index,
+            grouped.values,
+            label=gas,
+            marker='s',
+            markersize=3)
 
     plt.xlabel(x_label)
     plt.ylabel('Axial Specific Impulse (s)')
@@ -77,14 +94,23 @@ def create_plots(results, thruster_type, output_dir='output'):
     plt.legend()
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
-    plt.savefig(f'{output_dir}/{thruster_type}_isp_vs_V.png', dpi=300, bbox_inches='tight')
+    plt.savefig(
+        f'{output_dir}/{thruster_type}_isp_vs_V.png',
+        dpi=300,
+        bbox_inches='tight')
     plt.close()
 
     # Plot 3: Power vs Thrust (efficiency-like plot)
     plt.figure(figsize=(10, 8))
     for gas in gases:
         gas_data = df[df['gas'] == gas]
-        plt.scatter(gas_data['T_axial'] * 1000, gas_data['P_elec'], label=gas, alpha=0.6, s=20)
+        plt.scatter(
+            gas_data['T_axial'] *
+            1000,
+            gas_data['P_elec'],
+            label=gas,
+            alpha=0.6,
+            s=20)
 
     plt.xlabel('Axial Thrust (mN)')
     plt.ylabel('Electrical Power (W)')
@@ -92,7 +118,10 @@ def create_plots(results, thruster_type, output_dir='output'):
     plt.legend()
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
-    plt.savefig(f'{output_dir}/{thruster_type}_power_vs_thrust.png', dpi=300, bbox_inches='tight')
+    plt.savefig(
+        f'{output_dir}/{thruster_type}_power_vs_thrust.png',
+        dpi=300,
+        bbox_inches='tight')
     plt.close()
 
     # For ion engines, add space-charge analysis plots
@@ -101,10 +130,20 @@ def create_plots(results, thruster_type, output_dir='output'):
         plt.figure(figsize=(10, 8))
         for gas in gases:
             gas_data = df[df['gas'] == gas]
-            plt.scatter(gas_data['T_axial'] * 1000, gas_data['perveance_margin'],
-                       label=gas, alpha=0.6, s=20)
+            plt.scatter(
+                gas_data['T_axial'] *
+                1000,
+                gas_data['perveance_margin'],
+                label=gas,
+                alpha=0.6,
+                s=20)
 
-        plt.axhline(y=1.0, color='red', linestyle='--', alpha=0.7, label='Space-charge limit')
+        plt.axhline(
+            y=1.0,
+            color='red',
+            linestyle='--',
+            alpha=0.7,
+            label='Space-charge limit')
         plt.xlabel('Axial Thrust (mN)')
         plt.ylabel('Perveance Margin (I_CL/I_b)')
         plt.title(f'{title_prefix}: Space-Charge Analysis')
@@ -112,7 +151,10 @@ def create_plots(results, thruster_type, output_dir='output'):
         plt.grid(True, alpha=0.3)
         plt.yscale('log')
         plt.tight_layout()
-        plt.savefig(f'{output_dir}/{thruster_type}_perveance_analysis.png', dpi=300, bbox_inches='tight')
+        plt.savefig(
+            f'{output_dir}/{thruster_type}_perveance_analysis.png',
+            dpi=300,
+            bbox_inches='tight')
         plt.close()
 
         # Plot 5: Thrust efficiency breakdown
@@ -129,10 +171,14 @@ def create_plots(results, thruster_type, output_dir='output'):
         plt.legend()
         plt.grid(True, alpha=0.3)
         plt.tight_layout()
-        plt.savefig(f'{output_dir}/{thruster_type}_efficiency_analysis.png', dpi=300, bbox_inches='tight')
+        plt.savefig(
+            f'{output_dir}/{thruster_type}_efficiency_analysis.png',
+            dpi=300,
+            bbox_inches='tight')
         plt.close()
 
     print(f"Created plots for {thruster_type} thruster")
+
 
 def run_full_sweep():
     """Run complete parametric sweep for both thruster types"""
@@ -178,7 +224,9 @@ def run_full_sweep():
     print("\n[SWEEP] Running Hall thruster parametric sweep...")
     try:
         hall_results = calc.parametric_sweep_hall()
-        print(f"[DATA] Generated {len(hall_results)} Hall thruster data points")
+        print(
+            f"[DATA] Generated {
+                len(hall_results)} Hall thruster data points")
 
         hall_csv_path = os.path.join(output_dir, 'hall_sweep.csv')
         if save_to_csv(hall_results, hall_csv_path):
@@ -199,25 +247,36 @@ def run_full_sweep():
     try:
         if 'ion_results' in locals() and ion_results:
             ion_df = pd.DataFrame(ion_results)
-            print(f"\n[SUMMARY] Ion Engine Summary (Xenon, typical conditions):")
+            print(
+                f"\n[SUMMARY] Ion Engine Summary (Xenon, typical conditions):")
             xenon_ion = ion_df[(ion_df['gas'] == 'Xenon') &
-                              (ion_df['Va'] >= 1500) & (ion_df['Va'] <= 2500) &
-                              (ion_df['Ib'] >= 1.0) & (ion_df['Ib'] <= 3.0)]
+                               (ion_df['Va'] >= 1500) & (ion_df['Va'] <= 2500) &
+                               (ion_df['Ib'] >= 1.0) & (ion_df['Ib'] <= 3.0)]
             if not xenon_ion.empty:
-                print(f"   Thrust: {xenon_ion['T_axial'].mean() * 1000:.1f} mN")
+                print(
+                    f"   Thrust: {
+                        xenon_ion['T_axial'].mean() *
+                        1000:.1f} mN")
                 print(f"   Isp: {xenon_ion['Isp_eff'].mean():.1f} s")
                 print(f"   Power: {xenon_ion['P_elec'].mean():.1f} W")
-                print(f"   Perveance margin: {xenon_ion['perveance_margin'].mean():.2f}")
-                print(f"   Thrust efficiency: {(xenon_ion['T_axial']/xenon_ion['T_ideal']).mean():.3f}")
+                print(
+                    f"   Perveance margin: {
+                        xenon_ion['perveance_margin'].mean():.2f}")
+                print(
+                    f"   Thrust efficiency: {(xenon_ion['T_axial'] / xenon_ion['T_ideal']).mean():.3f}")
 
         if 'hall_results' in locals() and hall_results:
             hall_df = pd.DataFrame(hall_results)
-            print(f"\n[SUMMARY] Hall Thruster Summary (Xenon, typical conditions):")
+            print(
+                f"\n[SUMMARY] Hall Thruster Summary (Xenon, typical conditions):")
             xenon_hall = hall_df[(hall_df['gas'] == 'Xenon') &
-                                (hall_df['Vd'] >= 300) & (hall_df['Vd'] <= 500) &
-                                (hall_df['mdot'] >= 3e-6) & (hall_df['mdot'] <= 7e-6)]
+                                 (hall_df['Vd'] >= 300) & (hall_df['Vd'] <= 500) &
+                                 (hall_df['mdot'] >= 3e-6) & (hall_df['mdot'] <= 7e-6)]
             if not xenon_hall.empty:
-                print(f"   Thrust: {xenon_hall['T_axial'].mean() * 1000:.1f} mN")
+                print(
+                    f"   Thrust: {
+                        xenon_hall['T_axial'].mean() *
+                        1000:.1f} mN")
                 print(f"   Isp: {xenon_hall['Isp_ax'].mean():.1f} s")
                 print(f"   Power: {xenon_hall['P_elec'].mean():.1f} W")
 
@@ -230,5 +289,7 @@ def run_full_sweep():
     print("   3. Open: http://localhost:8000 in your browser")
 
     return True
+
+
 if __name__ == "__main__":
     run_full_sweep()

@@ -13,6 +13,7 @@ from pathlib import Path
 import socket
 import urllib.request
 
+
 def print_header():
     """Display diagnostics header"""
     print("""
@@ -22,12 +23,17 @@ def print_header():
 ╚══════════════════════════════════════════════════════════════╝
     """)
 
+
 def check_python_version():
     """Check Python version compatibility"""
     print("🐍 Checking Python version...")
 
     version = sys.version_info
-    print(f"   Current version: {version.major}.{version.minor}.{version.micro}")
+    print(
+        f"   Current version: {
+            version.major}.{
+            version.minor}.{
+                version.micro}")
 
     if version.major < 3:
         print("❌ Python 2 is not supported. Please upgrade to Python 3.7+")
@@ -40,6 +46,7 @@ def check_python_version():
 
     print("✅ Python version is compatible")
     return True, None
+
 
 def check_required_files():
     """Check if all required files exist"""
@@ -70,6 +77,7 @@ def check_required_files():
     print("✅ All required files found")
     return True, None
 
+
 def check_config_file():
     """Validate config.json file"""
     print("\n⚙️  Checking configuration file...")
@@ -79,7 +87,12 @@ def check_config_file():
             config = json.load(f)
 
         # Check required sections
-        required_sections = ['gases', 'gas_masses', 'ion_engine', 'hall_thruster', 'constants']
+        required_sections = [
+            'gases',
+            'gas_masses',
+            'ion_engine',
+            'hall_thruster',
+            'constants']
         for section in required_sections:
             if section not in config:
                 print(f"❌ Missing configuration section: {section}")
@@ -95,7 +108,11 @@ def check_config_file():
         # Validate ion engine config
         if 'ion_engine' in config:
             ion_config = config['ion_engine']
-            required_ion_keys = ['Va_range', 'Ib_range', 'Va_steps', 'Ib_steps']
+            required_ion_keys = [
+                'Va_range',
+                'Ib_range',
+                'Va_steps',
+                'Ib_steps']
             for key in required_ion_keys:
                 if key not in ion_config:
                     print(f"❌ Missing ion engine parameter: {key}")
@@ -113,6 +130,7 @@ def check_config_file():
     except Exception as e:
         print(f"❌ Error reading config.json: {e}")
         return False, f"Config error: {e}"
+
 
 def check_dependencies():
     """Check Python package dependencies"""
@@ -151,6 +169,7 @@ def check_dependencies():
     print("✅ All required packages available")
     return True, None
 
+
 def check_file_permissions():
     """Check file and directory permissions"""
     print("\n🔐 Checking file permissions...")
@@ -181,7 +200,8 @@ def check_file_permissions():
                     f.read(1)
                 print(f"✅ Can read {file_path} (with latin-1 encoding)")
             except Exception as e2:
-                permission_issues.append(f"Encoding error reading {file_path}: {e2}")
+                permission_issues.append(
+                    f"Encoding error reading {file_path}: {e2}")
                 print(f"❌ Encoding error reading {file_path}: {e2}")
         except Exception as e:
             permission_issues.append(f"Error accessing {file_path}: {e}")
@@ -205,6 +225,7 @@ def check_file_permissions():
     print("✅ File permissions are OK")
     return True, None
 
+
 def check_network_connectivity():
     """Check network connectivity for web interface"""
     print("\n🌐 Checking network connectivity...")
@@ -218,6 +239,7 @@ def check_network_connectivity():
         print("⚠️  No internet connection detected")
         print("   Web interface will work locally without internet")
         return True, "No internet (local mode only)"
+
 
 def check_system_resources():
     """Check system resources"""
@@ -252,6 +274,7 @@ def check_system_resources():
 
     print("✅ System resources OK")
     return True, None
+
 
 def test_core_functionality():
     """Test core functionality of the system"""
@@ -288,10 +311,11 @@ def test_core_functionality():
         print(f"❌ Core functionality test failed: {e}")
         return False, f"Functionality test failed: {e}"
 
+
 def generate_report(results):
     """Generate a comprehensive diagnostic report"""
     print("\n📋 DIAGNOSTIC REPORT")
-    print("="*50)
+    print("=" * 50)
 
     all_passed = True
     issues = []
@@ -303,7 +327,7 @@ def generate_report(results):
             all_passed = False
             issues.append(f"{test_name}: {error_msg}")
 
-    print("="*50)
+    print("=" * 50)
 
     if all_passed:
         print("🎉 ALL DIAGNOSTICS PASSED!")
@@ -323,6 +347,7 @@ def generate_report(results):
         print("   • Ensure you're in the ionic_propulsion_lab directory")
 
     return all_passed
+
 
 def main():
     """Main diagnostic function"""
@@ -346,7 +371,7 @@ def main():
     # Generate report
     all_passed = generate_report(results)
 
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     if all_passed:
         print("🎯 NEXT STEPS:")
         print("   1. Run: python launcher.py")
@@ -360,6 +385,7 @@ def main():
         print("   4. Re-run this diagnostic: python diagnostics.py")
 
     input("\nPress Enter to exit...")
+
 
 if __name__ == "__main__":
     main()

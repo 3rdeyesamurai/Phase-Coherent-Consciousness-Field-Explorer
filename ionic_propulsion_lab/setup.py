@@ -10,6 +10,7 @@ import subprocess
 import platform
 from pathlib import Path
 
+
 def print_header():
     """Display setup header"""
     print("""
@@ -19,17 +20,23 @@ def print_header():
 ╚══════════════════════════════════════════════════════════════╝
     """)
 
+
 def check_python_version():
     """Check if Python version is compatible"""
     print("🐍 Checking Python version...")
     version = sys.version_info
     if version.major < 3 or (version.major == 3 and version.minor < 7):
         print("❌ Python 3.7 or higher is required")
-        print(f"   Current version: {version.major}.{version.minor}.{version.micro}")
+        print(
+            f"   Current version: {
+                version.major}.{
+                version.minor}.{
+                version.micro}")
         return False
 
     print(f"✅ Python {version.major}.{version.minor}.{version.micro} found")
     return True
+
 
 def install_packages():
     """Install required Python packages"""
@@ -71,6 +78,7 @@ def install_packages():
         print(f"   pip install {' '.join(missing_packages)}")
         return False
 
+
 def create_desktop_shortcut():
     """Create desktop shortcut for Windows"""
     if platform.system() != 'Windows':
@@ -101,6 +109,7 @@ def create_desktop_shortcut():
     except Exception as e:
         print(f"ℹ️  Desktop shortcut creation failed: {e}")
         print("   You can still run the lab using run_lab.bat")
+
 
 def verify_installation():
     """Verify that everything is working"""
@@ -145,6 +154,7 @@ def verify_installation():
         print(f"❌ Module test failed: {e}")
         return False
 
+
 def show_usage_instructions():
     """Display usage instructions"""
     print("""
@@ -185,6 +195,7 @@ def show_usage_instructions():
 ╚══════════════════════════════════════════════════════════════╝
     """)
 
+
 def main():
     """Main setup function"""
     print_header()
@@ -214,13 +225,14 @@ def main():
         return
 
     # Show success message and usage instructions
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("🎉 SETUP COMPLETE! Ionic Propulsion Lab is ready to use!")
-    print("="*70)
+    print("=" * 70)
 
     show_usage_instructions()
 
     input("\nPress Enter to exit...")
+
 
 if __name__ == "__main__":
     main()

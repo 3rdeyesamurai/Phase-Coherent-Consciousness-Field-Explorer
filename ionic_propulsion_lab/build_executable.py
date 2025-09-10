@@ -14,6 +14,7 @@ import platform
 import shutil
 from pathlib import Path
 
+
 def print_header():
     """Display build header"""
     print("""
@@ -21,12 +22,13 @@ def print_header():
               Standalone Application Creator
     """)
 
+
 def check_pyinstaller():
     """Check if PyInstaller is installed"""
     print("[TOOL] Checking PyInstaller installation...")
 
     try:
-        import PyInstaller
+        import PyInstaller  # noqa: F401
         print("[OK] PyInstaller found")
         return True
     except ImportError:
@@ -34,13 +36,15 @@ def check_pyinstaller():
         print("\n[INSTALL] Installing PyInstaller...")
 
         try:
-            subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'pyinstaller'])
+            subprocess.check_call(
+                [sys.executable, '-m', 'pip', 'install', 'pyinstaller'])
             print("[OK] PyInstaller installed successfully")
             return True
         except subprocess.CalledProcessError:
             print("[ERROR] Failed to install PyInstaller")
             print("   Please install manually: pip install pyinstaller")
             return False
+
 
 def check_dependencies():
     """Check if all required packages are available"""
@@ -54,7 +58,7 @@ def check_dependencies():
     for package in required_packages:
         try:
             if package == 'tkinter':
-                import tkinter
+                import tkinter  # noqa: F401
             else:
                 __import__(package)
             print(f"[OK] {package} available")
@@ -63,9 +67,12 @@ def check_dependencies():
             print(f"[ERROR] {package} missing")
 
     if missing_packages:
-        print(f"\n[INSTALL] Installing missing packages: {', '.join(missing_packages)}")
+        print(
+            f"\n[INSTALL] Installing missing packages: {
+                ', '.join(missing_packages)}")
         try:
-            subprocess.check_call([sys.executable, '-m', 'pip', 'install'] + missing_packages)
+            subprocess.check_call(
+                [sys.executable, '-m', 'pip', 'install'] + missing_packages)
             print("[OK] All packages installed")
             return True
         except subprocess.CalledProcessError:
@@ -74,6 +81,7 @@ def check_dependencies():
 
     print("[OK] All dependencies available")
     return True
+
 
 def create_spec_file():
     """Create PyInstaller spec file for better control"""
@@ -163,6 +171,7 @@ exe = EXE(
     print("[OK] Created PyInstaller spec file")
     return True
 
+
 def build_executable():
     """Build the executable using PyInstaller"""
     print("\n[BUILD] Building executable...")
@@ -181,7 +190,11 @@ def build_executable():
     for option in cmd_options:
         try:
             # Test if this command works
-            result = subprocess.run(option + ['--help'], capture_output=True, text=True, timeout=5)
+            result = subprocess.run(
+                option + ['--help'],
+                capture_output=True,
+                text=True,
+                timeout=5)
             if result.returncode == 0 or 'usage' in result.stdout.lower():
                 cmd = option
                 break
@@ -226,6 +239,7 @@ def build_executable():
     except Exception as e:
         print(f"[ERROR] Build error: {e}")
         return False
+
 
 def create_installer_script():
     """Create a simple installer script"""
@@ -363,6 +377,7 @@ echo "For help, see the documentation files."
     print(f"✅ Created installer script: {installer_name}")
     return True
 
+
 def cleanup_build_files():
     """Clean up temporary build files"""
     print("\n🧹 Cleaning up build files...")
@@ -383,6 +398,7 @@ def cleanup_build_files():
             print(f"🗑️  Removed: {item}")
 
     print("✅ Cleanup complete")
+
 
 def show_usage():
     """Show usage instructions"""
@@ -428,6 +444,7 @@ TROUBLESHOOTING:
 For detailed help, see the documentation files included with the executable.
     """)
 
+
 def main():
     """Main build function"""
     print_header()
@@ -469,6 +486,7 @@ def main():
     show_usage()
 
     input("\nPress Enter to exit...")
+
 
 if __name__ == "__main__":
     main()

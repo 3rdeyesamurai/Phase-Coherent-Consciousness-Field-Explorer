@@ -14,6 +14,7 @@ import webbrowser
 import time
 from pathlib import Path
 
+
 def print_banner():
     """Display the application banner"""
     print("""
@@ -29,6 +30,7 @@ def print_banner():
 ║  • Professional plots & data export                         ║
 ╚══════════════════════════════════════════════════════════════╝
     """)
+
 
 def check_dependencies():
     """Check if required Python packages are installed"""
@@ -47,7 +49,8 @@ def check_dependencies():
             print(f"   - {package}")
         print("\n📦 Installing missing packages...")
         try:
-            subprocess.check_call([sys.executable, '-m', 'pip', 'install'] + missing_packages)
+            subprocess.check_call(
+                [sys.executable, '-m', 'pip', 'install'] + missing_packages)
             print("✅ Packages installed successfully!")
         except subprocess.CalledProcessError:
             print("❌ Failed to install packages. Please install manually:")
@@ -56,6 +59,7 @@ def check_dependencies():
 
     return True
 
+
 def run_analysis():
     """Run the parametric sweep analysis"""
     print("\n🔬 Running Parametric Analysis...")
@@ -63,8 +67,11 @@ def run_analysis():
     print("   Analysis includes space-charge effects and multi-gas comparisons")
 
     try:
-        result = subprocess.run([sys.executable, 'run_sweep.py'],
-                              capture_output=True, text=True, cwd=os.getcwd())
+        result = subprocess.run([sys.executable,
+                                 'run_sweep.py'],
+                                capture_output=True,
+                                text=True,
+                                cwd=os.getcwd())
 
         if result.returncode == 0:
             print("✅ Analysis completed successfully!")
@@ -81,6 +88,7 @@ def run_analysis():
     except Exception as e:
         print(f"❌ Error running analysis: {e}")
         return False
+
 
 def start_web_server():
     """Start the local web server for interactive visualization"""
@@ -100,10 +108,17 @@ def start_web_server():
 
         # Start web server
         print("   Starting server on http://localhost:8000")
-        server_process = subprocess.Popen([sys.executable, '-m', 'http.server', '8000'],
-                                        cwd=os.path.join(os.getcwd(), 'viz'),
-                                        stdout=subprocess.DEVNULL,
-                                        stderr=subprocess.DEVNULL)
+        server_process = subprocess.Popen(
+            [
+                sys.executable,
+                '-m',
+                'http.server',
+                '8000'],
+            cwd=os.path.join(
+                os.getcwd(),
+                'viz'),
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL)
 
         # Wait a moment for server to start
         time.sleep(2)
@@ -124,19 +139,20 @@ def start_web_server():
         print(f"❌ Error starting web server: {e}")
         return False
 
+
 def show_menu():
     """Display the main menu"""
     while True:
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("📋 MAIN MENU")
-        print("="*60)
+        print("=" * 60)
         print("1. 🔬 Run Parametric Analysis")
         print("2. 🌐 Launch Interactive Visualization")
         print("3. 📊 View Results (Open Output Folder)")
         print("4. 📖 View Documentation")
         print("5. ⚙️  Configure Parameters")
         print("6. 🚪 Exit")
-        print("="*60)
+        print("=" * 60)
 
         try:
             choice = input("Select option (1-6): ").strip()
@@ -206,6 +222,7 @@ def show_menu():
         except Exception as e:
             print(f"❌ Error: {e}")
 
+
 def main():
     """Main launcher function"""
     print_banner()
@@ -224,6 +241,7 @@ def main():
 
     # Show menu
     show_menu()
+
 
 if __name__ == "__main__":
     main()
