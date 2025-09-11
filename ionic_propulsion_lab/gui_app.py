@@ -23,7 +23,12 @@ import os
 import sys
 import subprocess
 import threading
+import time
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import queue
+import psutil
+import gc
 
 # Import EMR Suit Visualization components
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'emr_suit_visualization'))
@@ -33,6 +38,138 @@ try:
 except ImportError:
     EMR_AVAILABLE = False
     print("EMR Suit Visualization not available - some features will be disabled")
+
+
+class PerformanceMonitor:
+    """Advanced performance monitoring and optimization system"""
+
+    def __init__(self):
+        self.start_time = datetime.now()
+        self.cpu_usage = []
+        self.memory_usage = []
+        self.calculation_times = []
+        self.ui_update_times = []
+        self.cache_hits = 0
+        self.cache_misses = 0
+        self.performance_score = 100
+
+        # Start monitoring thread
+        self.monitoring_active = True
+        self.monitor_thread = threading.Thread(target=self._monitor_system, daemon=True)
+        self.monitor_thread.start()
+
+    def _monitor_system(self):
+        """Monitor system resources in background"""
+        while self.monitoring_active:
+            try:
+                # CPU and memory monitoring
+                cpu_percent = psutil.cpu_percent(interval=1)
+                memory = psutil.virtual_memory()
+
+                self.cpu_usage.append(cpu_percent)
+                self.memory_usage.append(memory.percent)
+
+                # Keep only last 60 readings (1 minute)
+                if len(self.cpu_usage) > 60:
+                    self.cpu_usage.pop(0)
+                if len(self.memory_usage) > 60:
+                    self.memory_usage.pop(0)
+
+                # Calculate performance score
+                avg_cpu = sum(self.cpu_usage[-10:]) / len(self.cpu_usage[-10:]) if self.cpu_usage else 0
+                avg_memory = sum(self.memory_usage[-10:]) / len(self.memory_usage[-10:]) if self.memory_usage else 0
+
+                # Performance scoring algorithm
+                cpu_score = max(0, 100 - avg_cpu * 2)  # Penalize high CPU usage
+                memory_score = max(0, 100 - avg_memory)  # Penalize high memory usage
+                cache_score = min(100, (self.cache_hits / max(1, self.cache_hits + self.cache_misses)) * 100)
+
+                self.performance_score = (cpu_score * 0.4 + memory_score * 0.4 + cache_score * 0.2)
+
+                time.sleep(1)  # Monitor every second
+
+            except Exception as e:
+                print(f"Performance monitoring error: {e}")
+                time.sleep(5)  # Wait longer on error
+
+    def record_calculation_time(self, duration):
+        """Record calculation execution time"""
+        self.calculation_times.append(duration)
+        if len(self.calculation_times) > 100:
+            self.calculation_times.pop(0)
+
+    def record_ui_update_time(self, duration):
+        """Record UI update execution time"""
+        self.ui_update_times.append(duration)
+        if len(self.ui_update_times) > 100:
+            self.ui_update_times.pop(0)
+
+    def record_cache_hit(self):
+        """Record cache hit"""
+        self.cache_hits += 1
+
+    def record_cache_miss(self):
+        """Record cache miss"""
+        self.cache_misses += 1
+
+    def get_performance_status(self):
+        """Get current performance status"""
+        if self.performance_score >= 90:
+            return "⚡ Excellent", "green"
+        elif self.performance_score >= 75:
+            return "⚡ Good", "green"
+        elif self.performance_score >= 60:
+            return "⚡ Fair", "yellow"
+        elif self.performance_score >= 40:
+            return "⚠️ Poor", "orange"
+        else:
+            return "🔴 Critical", "red"
+
+    def get_system_info(self):
+        """Get detailed system information"""
+        memory = psutil.virtual_memory()
+        return {
+            'cpu_percent': psutil.cpu_percent(),
+            'memory_percent': memory.percent,
+            'memory_used_gb': memory.used / (1024**3),
+            'memory_total_gb': memory.total / (1024**3),
+            'avg_calculation_time': sum(self.calculation_times) / len(self.calculation_times) if self.calculation_times else 0,
+            'avg_ui_update_time': sum(self.ui_update_times) / len(self.ui_update_times) if self.ui_update_times else 0,
+            'cache_hit_ratio': self.cache_hits / max(1, self.cache_hits + self.cache_misses),
+            'uptime_seconds': (datetime.now() - self.start_time).total_seconds()
+        }
+
+    def optimize_for_performance(self):
+        """Apply performance optimizations based on current system state"""
+        system_info = self.get_system_info()
+
+        optimizations = []
+
+        # High CPU usage optimizations
+        if system_info['cpu_percent'] > 80:
+            optimizations.append("High CPU usage detected - reducing calculation frequency")
+            # Could implement CPU-based throttling here
+
+        # High memory usage optimizations
+        if system_info['memory_percent'] > 85:
+            optimizations.append("High memory usage detected - triggering garbage collection")
+            gc.collect()
+
+        # Slow calculation optimizations
+        if system_info['avg_calculation_time'] > 0.1:  # More than 100ms
+            optimizations.append("Slow calculations detected - increasing cache size")
+
+        # Poor cache performance
+        if system_info['cache_hit_ratio'] < 0.5:
+            optimizations.append("Low cache hit ratio - optimizing cache strategy")
+
+        return optimizations
+
+    def stop_monitoring(self):
+        """Stop performance monitoring"""
+        self.monitoring_active = False
+        if hasattr(self, 'monitor_thread'):
+            self.monitor_thread.join(timeout=1)
 
 
 class IonicPropulsionGUI:
@@ -131,7 +268,7 @@ class IonicPropulsionGUI:
         self.root.option_add('*Label.background', self.dark_colors['bg_primary'])
         self.root.option_add('*Label.foreground', self.dark_colors['fg_primary'])
 
-        # Set matplotlib style to dark background
+        # Set matplotlib style to dark background with performance optimizations
         plt.style.use('dark_background')
         plt.rcParams['figure.facecolor'] = self.dark_colors['bg_primary']
         plt.rcParams['axes.facecolor'] = self.dark_colors['bg_secondary']
@@ -143,6 +280,28 @@ class IonicPropulsionGUI:
         plt.rcParams['grid.color'] = self.dark_colors['border']
         plt.rcParams['savefig.facecolor'] = self.dark_colors['bg_primary']
         plt.rcParams['savefig.edgecolor'] = self.dark_colors['bg_primary']
+
+        # Performance optimizations for matplotlib
+        plt.rcParams['figure.dpi'] = 72  # Lower DPI for better performance
+        plt.rcParams['figure.max_open_warning'] = 10  # Reduce memory usage
+        plt.rcParams['agg.path.chunksize'] = 10000  # Optimize path rendering
+        plt.rcParams['path.simplify'] = True  # Simplify paths
+        plt.rcParams['path.simplify_threshold'] = 1.0  # Simplify threshold
+        plt.rcParams['axes.linewidth'] = 1.0  # Thinner lines for performance
+        plt.rcParams['lines.linewidth'] = 1.5  # Optimized line width
+
+        # Initialize advanced performance monitoring
+        self.performance_monitor = PerformanceMonitor()
+        self.calculation_executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="calc")
+        self.ui_update_queue = queue.Queue()
+        self.calculation_cache = {}
+        self.last_memory_cleanup = datetime.now()
+
+        # Performance optimization variables
+        self._parameter_update_timer = None
+        self._emr_update_timer = None
+        self._plot_update_timer = None
+        self._last_scroll_time = 0
 
         # Initialize variables
         self.calc = None
@@ -188,6 +347,23 @@ class IonicPropulsionGUI:
             padding=(10, 5),
             foreground="cyan")
         progress_bar.pack(side=tk.RIGHT)
+
+        # Performance indicator
+        self.performance_var = tk.StringVar()
+        self.performance_var.set("⚡ Performance: Good")
+        performance_bar = ttk.Label(
+            status_frame,
+            textvariable=self.performance_var,
+            relief=tk.FLAT,
+            padding=(10, 5),
+            foreground="green")
+        performance_bar.pack(side=tk.RIGHT)
+
+        # Start performance status update timer (reduced frequency for better performance)
+        self.update_performance_status()
+
+        # Start background calculation thread
+        self.start_background_calculations()
 
         # Parametric sweep configuration variables
         self.sweep_config = {
@@ -338,7 +514,7 @@ class IonicPropulsionGUI:
         help_menu.add_command(label="About", command=self.show_about)
 
     def create_main_layout(self):
-        """Create main application layout"""
+        """Create main application layout with optimized scrolling"""
         # Main container
         main_frame = ttk.Frame(self.root)
         main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
@@ -347,9 +523,11 @@ class IonicPropulsionGUI:
         left_container = ttk.Frame(main_frame, width=450)
         left_container.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 10))
 
-        # Create canvas and scrollbar for left panel
-        left_canvas = tk.Canvas(left_container, width=430)
-        left_scrollbar = ttk.Scrollbar(left_container, orient="vertical", command=left_canvas.yview)
+        # Create canvas and scrollbar for left panel with performance optimizations
+        left_scrollbar = ttk.Scrollbar(left_container, orient="vertical")
+        left_canvas = tk.Canvas(left_container, highlightthickness=0, yscrollcommand=left_scrollbar.set)
+        left_scrollbar.config(command=left_canvas.yview)
+
         left_scrollable_frame = ttk.Frame(left_canvas)
 
         left_scrollable_frame.bind(
@@ -358,27 +536,65 @@ class IonicPropulsionGUI:
         )
 
         left_canvas.create_window((0, 0), window=left_scrollable_frame, anchor="nw")
-        left_canvas.configure(yscrollcommand=left_scrollbar.set)
 
-        # Pack the canvas and scrollbar
-        left_canvas.pack(side="left", fill="both", expand=True)
+        # Pack the scrollbar first, then canvas to fill remaining space
         left_scrollbar.pack(side="right", fill="y")
+        left_canvas.pack(side="left", fill="both", expand=True)
 
-        # Bind mousewheel to entire left panel for scrolling
+        # Optimized mousewheel binding with VSync-like throttling for tear-free scrolling
+        self._scroll_debounce_timer = None
+        self._last_scroll_time = 0
+
         def _on_mousewheel(event):
-            left_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+            # Mark scroll start
+            self._on_scroll_start(event)
 
-        # Bind to canvas and all its children
-        left_canvas.bind_all("<MouseWheel>", _on_mousewheel)
+            # Cancel previous scroll if still pending
+            if self._scroll_debounce_timer:
+                self.root.after_cancel(self._scroll_debounce_timer)
 
-        # Also bind to the scrollable frame and its children
-        def bind_mousewheel(widget):
-            widget.bind("<MouseWheel>", _on_mousewheel)
-            for child in widget.winfo_children():
-                bind_mousewheel(child)
+            # VSync-like throttling: ~60Hz (16ms) to match monitor refresh rate
+            current_time = datetime.now().timestamp() * 1000  # milliseconds
+            time_since_last_scroll = current_time - self._last_scroll_time
 
-        # Apply binding to the scrollable frame after it's created
-        left_scrollable_frame.after(100, lambda: bind_mousewheel(left_scrollable_frame))
+            if time_since_last_scroll >= 16:  # Minimum 16ms between scrolls (~60fps)
+                # Perform scroll immediately for responsive feel
+                try:
+                    left_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+                    self._last_scroll_time = current_time
+                    # Schedule scroll end detection with longer delay
+                    self.root.after(200, lambda: self._on_scroll_end(event))
+                except tk.TclError:
+                    # Canvas might be destroyed
+                    pass
+            else:
+                # Queue scroll for next frame to maintain VSync timing
+                def perform_scroll():
+                    try:
+                        left_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+                        self._scroll_debounce_timer = None
+                        self._last_scroll_time = datetime.now().timestamp() * 1000
+                        # Schedule scroll end detection
+                        self.root.after(200, lambda: self._on_scroll_end(event))
+                    except tk.TclError:
+                        # Canvas might be destroyed
+                        pass
+
+                # Schedule for next frame (remaining time to reach 16ms)
+                delay = max(1, int(16 - time_since_last_scroll))
+                self._scroll_debounce_timer = self.root.after(delay, perform_scroll)
+
+        # Enable hover scrolling - bind mousewheel when mouse enters canvas
+        def _bind_hover_scroll(event):
+            left_canvas.bind("<MouseWheel>", _on_mousewheel)
+            left_canvas.bind("<Leave>", _unbind_hover_scroll)
+
+        def _unbind_hover_scroll(event):
+            left_canvas.unbind("<MouseWheel>")
+            left_canvas.unbind("<Leave>")
+
+        # Bind hover events to enable/disable scrolling
+        left_canvas.bind("<Enter>", _bind_hover_scroll)
 
         # Right panel - Results
         right_panel = ttk.Frame(main_frame)
@@ -690,11 +906,37 @@ class IonicPropulsionGUI:
 
     def debounced_emr_update(self, *args):
         """Debounced EMR update to prevent excessive screen tearing"""
-        if self.emr_update_timer:
-            self.root.after_cancel(self.emr_update_timer)
+        if self._emr_update_timer:
+            self.root.after_cancel(self._emr_update_timer)
 
-        # Schedule update after 200ms delay
-        self.emr_update_timer = self.root.after(200, self.update_emr_calculations)
+        # Schedule update after 500ms delay (longer for EMR to reduce load)
+        def perform_emr_update():
+            try:
+                self.update_emr_calculations()
+                self._emr_update_timer = None
+            except tk.TclError:
+                # Widget might be destroyed
+                pass
+
+        self._emr_update_timer = self.root.after(500, perform_emr_update)
+
+    def _on_scroll_start(self, event):
+        """Handle scroll start to pause heavy updates"""
+        self._is_scrolling = True
+        self._last_scroll_time = datetime.now().timestamp()
+
+    def _on_scroll_end(self, event):
+        """Handle scroll end to resume updates"""
+        self._is_scrolling = False
+
+    def _should_skip_update(self):
+        """Check if updates should be skipped during scrolling"""
+        if hasattr(self, '_is_scrolling') and self._is_scrolling:
+            current_time = datetime.now().timestamp()
+            # Skip updates for 200ms after scrolling stops
+            if current_time - self._last_scroll_time < 0.2:
+                return True
+        return False
 
     def create_mission_planning_controls(self):
         """Create mission planning parameter controls"""
@@ -1558,59 +1800,134 @@ For detailed documentation, see README.md and USER_GUIDE.md
             self.status_var.set("❌ Calculator initialization failed")
 
     def update_calculations(self, *args):
-        """Update real-time calculations with improved UX feedback"""
+        """Update real-time calculations with optimized performance using background threading and debouncing"""
         if not self.calc:
             self.status_var.set("❌ Calculator not initialized")
             return
 
-        # Provide immediate visual feedback
-        self.status_var.set("🔄 Calculating...")
-        self.progress_var.set("Processing...")
-        self.root.update_idletasks()  # Force UI update
+        # Skip updates during scrolling to prevent screen tearing
+        if self._should_skip_update():
+            return
 
+        # Cancel previous parameter update if still pending
+        if self._parameter_update_timer:
+            self.root.after_cancel(self._parameter_update_timer)
+
+        # Debounce parameter updates to prevent excessive calculations
+        def perform_calculation():
+            try:
+                # Check if parameters actually changed to avoid unnecessary calculations
+                current_params = self._get_current_parameters()
+                if hasattr(self, '_last_params') and self._last_params == current_params:
+                    return  # Skip calculation if parameters haven't changed
+
+                self._last_params = current_params
+
+                # Provide immediate visual feedback
+                self.status_var.set("🔄 Calculating...")
+                self.progress_var.set("Processing...")
+                self.root.update_idletasks()  # Force UI update
+
+                # Check cache first
+                cache_key = self._get_cache_key()
+                if hasattr(self, '_calc_cache') and cache_key in self._calc_cache:
+                    # Use cached result
+                    result = self._calc_cache[cache_key]
+                    self.performance_monitor.record_cache_hit()
+                    self._handle_cached_result(result)
+                    return
+
+                # Submit calculation to background thread
+                calc_request = self._prepare_calculation_request()
+                if calc_request:
+                    self.calculation_queue.put(calc_request)
+                    self.performance_monitor.record_cache_miss()
+
+                self._parameter_update_timer = None
+            except tk.TclError:
+                # Widget might be destroyed
+                pass
+
+        self._parameter_update_timer = self.root.after(300, perform_calculation)  # 300ms debounce
+
+    def _get_cache_key(self):
+        """Generate cache key for current parameters"""
+        if self.thruster_type.get() == "ion":
+            return f"ion_{self.va_var.get()}_{self.ib_var.get()}_{self.gas_var.get()}"
+        else:
+            return f"hall_{self.vd_var.get()}_{self.mdot_var.get()}_{self.gas_var.get()}"
+
+    def _prepare_calculation_request(self):
+        """Prepare calculation request for background processing"""
+        if self.thruster_type.get() == "ion":
+            return {
+                'type': 'ion_engine',
+                'Va': self.va_var.get(),
+                'Ib': self.ib_var.get(),
+                'gas': self.gas_var.get(),
+                'tau_geom': self.tau_geom_var.get(),
+                'tau_trans': self.tau_trans_var.get(),
+                'sigma_deg': self.sigma_var.get()
+            }
+        else:
+            return {
+                'type': 'hall_thruster',
+                'Vd': self.vd_var.get(),
+                'mdot': self.mdot_var.get() * 1e-6,  # Convert mg/s to kg/s
+                'gas': self.gas_var.get(),
+                'eta_acc': self.eta_acc_var.get(),
+                'tau_prop': self.tau_prop_var.get(),
+                'sigma_deg': self.hall_sigma_var.get()
+            }
+
+    def _handle_cached_result(self, result):
+        """Handle cached calculation result"""
         try:
+            self.current_results = result
+
             if self.thruster_type.get() == "ion":
-                # Ion engine calculation
-                result = self.calc.calculate_ion_engine(
-                    self.va_var.get(),
-                    self.ib_var.get(),
-                    self.gas_var.get(),
-                    self.config['ion_engine']['geometry']['A_grid'],
-                    self.config['ion_engine']['geometry']['d'],
-                    self.tau_geom_var.get(),
-                    self.tau_trans_var.get(),
-                    self.config['ion_engine']['divergence']['model'],
-                    self.sigma_var.get()
-                )
-
                 self.display_ion_results(result)
-
             else:
-                # Hall thruster calculation
-                result = self.calc.calculate_hall_thruster(
-                    self.vd_var.get(),
-                    self.mdot_var.get() * 1e-6,  # Convert mg/s to kg/s
-                    self.gas_var.get(),
-                    self.eta_acc_var.get(),
-                    self.tau_prop_var.get(),
-                    self.config['hall_thruster']['divergence']['model'],
-                    self.hall_sigma_var.get()
-                )
-
                 self.display_hall_results(result)
 
-            self.current_results = result
-            self.update_plot()
+            # Only update plot if plot tab is visible to save resources
+            if hasattr(self, 'results_notebook'):
+                current_tab = self.results_notebook.index(self.results_notebook.select())
+                if current_tab == 2:  # Plot tab index
+                    self.update_plot()
 
             # Success feedback
-            self.status_var.set("✅ Calculation complete")
+            self.status_var.set("✅ Calculation complete (cached)")
             self.progress_var.set("")
 
         except Exception as e:
             self.results_text.delete(1.0, tk.END)
-            self.results_text.insert(tk.END, f"❌ Calculation Error: {e}")
-            self.status_var.set(f"❌ Calculation error: {str(e)[:50]}...")
+            self.results_text.insert(tk.END, f"❌ Cached result error: {e}")
+            self.status_var.set(f"❌ Cached result error: {str(e)[:50]}...")
             self.progress_var.set("")
+
+    def _get_current_parameters(self):
+        """Get current parameter values for change detection"""
+        if self.thruster_type.get() == "ion":
+            return (
+                self.thruster_type.get(),
+                self.gas_var.get(),
+                round(self.va_var.get(), 1),  # Round to reduce sensitivity
+                round(self.ib_var.get(), 3),
+                round(self.tau_geom_var.get(), 3),
+                round(self.tau_trans_var.get(), 3),
+                round(self.sigma_var.get(), 1)
+            )
+        else:
+            return (
+                self.thruster_type.get(),
+                self.gas_var.get(),
+                round(self.vd_var.get(), 1),
+                round(self.mdot_var.get(), 1),
+                round(self.eta_acc_var.get(), 3),
+                round(self.tau_prop_var.get(), 3),
+                round(self.hall_sigma_var.get(), 1)
+            )
 
     def update_mission_calculations(self, *args):
         """Update mission-related calculations when parameters change"""
@@ -1887,108 +2204,187 @@ EFFICIENCY ANALYSIS:
             f"✅ Hall thruster calculation complete - Thrust: {result['T_axial'] * 1000:.1f} mN")
 
     def update_plot(self):
-        """Update the interactive plot"""
+        """Update the interactive plot with optimized performance"""
         if not hasattr(self, 'current_results') or not self.current_results:
             return
 
+        # Performance optimization: Only update plot if it's visible and not too frequent
+        if hasattr(self, '_last_plot_update'):
+            current_time = datetime.now().timestamp()
+            if current_time - self._last_plot_update < 0.5:  # Limit to 2 updates per second
+                return
+        self._last_plot_update = datetime.now().timestamp()
+
         try:
+            # Clear axes efficiently
             self.ax.clear()
 
-            # Simple parameter sweep for visualization
-            if self.thruster_type.get() == "ion":
-                # Vary voltage for ion engine
-                voltages = np.linspace(500, 4000, 50)
-                thrusts = []
-                isp_values = []
+            # Use cached data if available and parameters haven't changed significantly
+            cache_key = f"plot_{self.thruster_type.get()}_{self.x_var.get()}_{self.y_var.get()}"
+            if not hasattr(self, '_plot_cache'):
+                self._plot_cache = {}
 
-                for va in voltages:
-                    result = self.calc.calculate_ion_engine(
-                        va, self.ib_var.get(), self.gas_var.get(),
-                        self.config['ion_engine']['geometry']['A_grid'],
-                        self.config['ion_engine']['geometry']['d'],
-                        self.tau_geom_var.get(), self.tau_trans_var.get(),
-                        self.config['ion_engine']['divergence']['model'],
-                        self.sigma_var.get()
-                    )
-                    thrusts.append(result['T_axial'] * 1000)  # Convert to mN
-                    isp_values.append(result['Isp_eff'])
-
-                x_data = voltages
-                x_label = "Acceleration Voltage (V)"
-
+            if cache_key in self._plot_cache:
+                cached_data = self._plot_cache[cache_key]
+                # Check if parameters are still similar
+                if self._plot_params_unchanged(cached_data['params']):
+                    # Use cached plot data
+                    x_plot, y_plot, x_label, y_label = cached_data['data']
+                else:
+                    # Recalculate and cache
+                    x_plot, y_plot, x_label, y_label = self._calculate_plot_data()
+                    self._plot_cache[cache_key] = {
+                        'data': (x_plot, y_plot, x_label, y_label),
+                        'params': self._get_plot_params()
+                    }
+                    # Limit cache size
+                    if len(self._plot_cache) > 10:
+                        self._plot_cache.pop(next(iter(self._plot_cache)))
             else:
-                # Vary voltage for Hall thruster
-                voltages = np.linspace(200, 800, 50)
-                thrusts = []
-                isp_values = []
+                # Calculate new data and cache
+                x_plot, y_plot, x_label, y_label = self._calculate_plot_data()
+                self._plot_cache[cache_key] = {
+                    'data': (x_plot, y_plot, x_label, y_label),
+                    'params': self._get_plot_params()
+                }
 
-                for vd in voltages:
-                    result = self.calc.calculate_hall_thruster(
-                        vd, self.mdot_var.get() * 1e-6, self.gas_var.get(),
-                        self.eta_acc_var.get(), self.tau_prop_var.get(),
-                        self.config['hall_thruster']['divergence']['model'],
-                        self.hall_sigma_var.get()
-                    )
-                    thrusts.append(result['T_axial'] * 1000)  # Convert to mN
-                    isp_values.append(result['Isp_ax'])
-
-                x_data = voltages
-                x_label = "Discharge Voltage (V)"
-
-            # Plot based on selected variables
-            x_var = self.x_var.get()
-            y_var = self.y_var.get()
-
-            if x_var == "Va" or x_var == "Vd":
-                x_plot = x_data
-            elif x_var == "Ib":
-                x_plot = [self.ib_var.get()] * len(thrusts)
-            elif x_var == "T_axial":
-                x_plot = thrusts
-            else:  # Isp_eff or Isp_ax
-                x_plot = isp_values
-
-            if y_var == "T_axial":
-                y_plot = thrusts
-                y_label = "Thrust (mN)"
-            elif y_var == "Isp_eff" or y_var == "Isp_ax":
-                y_plot = isp_values
-                y_label = "Specific Impulse (s)"
-            elif y_var == "P_elec":
-                # Approximate power calculation
-                if self.thruster_type.get() == "ion":
-                    y_plot = [va * self.ib_var.get() for va in x_data]
-                else:
-                    y_plot = [vd * 10 for vd in x_data]  # Rough approximation
-                y_label = "Electrical Power (W)"
-            else:  # perveance_margin (ion only)
-                if self.thruster_type.get() == "ion":
-                    y_plot = [0.8] * len(thrusts)  # Placeholder
-                else:
-                    y_plot = [1.0] * len(thrusts)
-                y_label = "Perveance Margin"
-
-            self.ax.plot(
-                x_plot,
-                y_plot,
-                'b-',
-                linewidth=2,
-                marker='o',
-                markersize=3)
+            # Optimized plotting with reduced complexity
+            self.ax.plot(x_plot, y_plot, 'b-', linewidth=1.5, marker='o', markersize=2, markevery=max(1, len(x_plot)//20))
             self.ax.set_xlabel(x_label)
             self.ax.set_ylabel(y_label)
-            self.ax.set_title(
-                f"{self.thruster_type.get().title()} Performance: {y_var} vs {x_var}")
+            self.ax.set_title(f"{self.thruster_type.get().title()} Performance: {self.y_var.get()} vs {self.x_var.get()}")
             self.ax.grid(True, alpha=0.3)
 
+            # Optimize layout and drawing
             self.figure.tight_layout()
-            self.canvas.draw()
+            self.canvas.draw_idle()  # Use draw_idle for better performance
 
         except Exception as e:
             self.ax.clear()
             self.ax.text(0.5, 0.5, f"Plot Error:\n{str(e)}",
                          ha='center', va='center', transform=self.ax.transAxes)
-            self.canvas.draw()
+            self.canvas.draw_idle()
+
+    def _calculate_plot_data(self):
+        """Calculate plot data with reduced computational load"""
+        # Use fewer points for better performance
+        num_points = 25  # Reduced from 50
+
+        if self.thruster_type.get() == "ion":
+            # Vary voltage for ion engine
+            voltages = np.linspace(500, 4000, num_points)
+            thrusts = []
+            isp_values = []
+
+            for va in voltages:
+                result = self.calc.calculate_ion_engine(
+                    va, self.ib_var.get(), self.gas_var.get(),
+                    self.config['ion_engine']['geometry']['A_grid'],
+                    self.config['ion_engine']['geometry']['d'],
+                    self.tau_geom_var.get(), self.tau_trans_var.get(),
+                    self.config['ion_engine']['divergence']['model'],
+                    self.sigma_var.get()
+                )
+                thrusts.append(result['T_axial'] * 1000)  # Convert to mN
+                isp_values.append(result['Isp_eff'])
+
+            x_data = voltages
+            x_label = "Acceleration Voltage (V)"
+
+        else:
+            # Vary voltage for Hall thruster
+            voltages = np.linspace(200, 800, num_points)
+            thrusts = []
+            isp_values = []
+
+            for vd in voltages:
+                result = self.calc.calculate_hall_thruster(
+                    vd, self.mdot_var.get() * 1e-6, self.gas_var.get(),
+                    self.eta_acc_var.get(), self.tau_prop_var.get(),
+                    self.config['hall_thruster']['divergence']['model'],
+                    self.hall_sigma_var.get()
+                )
+                thrusts.append(result['T_axial'] * 1000)  # Convert to mN
+                isp_values.append(result['Isp_ax'])
+
+            x_data = voltages
+            x_label = "Discharge Voltage (V)"
+
+        # Plot based on selected variables
+        x_var = self.x_var.get()
+        y_var = self.y_var.get()
+
+        if x_var == "Va" or x_var == "Vd":
+            x_plot = x_data
+        elif x_var == "Ib":
+            x_plot = [self.ib_var.get()] * len(thrusts)
+        elif x_var == "T_axial":
+            x_plot = thrusts
+        else:  # Isp_eff or Isp_ax
+            x_plot = isp_values
+
+        if y_var == "T_axial":
+            y_plot = thrusts
+            y_label = "Thrust (mN)"
+        elif y_var == "Isp_eff" or y_var == "Isp_ax":
+            y_plot = isp_values
+            y_label = "Specific Impulse (s)"
+        elif y_var == "P_elec":
+            # Approximate power calculation
+            if self.thruster_type.get() == "ion":
+                y_plot = [va * self.ib_var.get() for va in x_data]
+            else:
+                y_plot = [vd * 10 for vd in x_data]  # Rough approximation
+            y_label = "Electrical Power (W)"
+        else:  # perveance_margin (ion only)
+            if self.thruster_type.get() == "ion":
+                y_plot = [0.8] * len(thrusts)  # Placeholder
+            else:
+                y_plot = [1.0] * len(thrusts)
+            y_label = "Perveance Margin"
+
+        return x_plot, y_plot, x_label, y_label
+
+    def _get_plot_params(self):
+        """Get current plot parameters for caching"""
+        if self.thruster_type.get() == "ion":
+            return (
+                self.thruster_type.get(),
+                round(self.ib_var.get(), 2),
+                round(self.tau_geom_var.get(), 3),
+                round(self.tau_trans_var.get(), 3),
+                round(self.sigma_var.get(), 1),
+                self.x_var.get(),
+                self.y_var.get()
+            )
+        else:
+            return (
+                self.thruster_type.get(),
+                round(self.mdot_var.get(), 1),
+                round(self.eta_acc_var.get(), 3),
+                round(self.tau_prop_var.get(), 3),
+                round(self.hall_sigma_var.get(), 1),
+                self.x_var.get(),
+                self.y_var.get()
+            )
+
+    def _plot_params_unchanged(self, cached_params):
+        """Check if plot parameters have changed significantly"""
+        current_params = self._get_plot_params()
+        if len(cached_params) != len(current_params):
+            return False
+
+        for i, (cached, current) in enumerate(zip(cached_params, current_params)):
+            if isinstance(cached, str) and isinstance(current, str):
+                if cached != current:
+                    return False
+            elif isinstance(cached, (int, float)) and isinstance(current, (int, float)):
+                # Allow small tolerance for numeric parameters
+                if abs(cached - current) > 0.1:
+                    return False
+            else:
+                return False
+        return True
 
     def run_parametric_sweep(self):
         """Run parametric sweep in background thread with GUI-configured parameters"""
@@ -2568,6 +2964,10 @@ For detailed physics equations, see the Physics Guide tab.
         if not EMR_AVAILABLE or not hasattr(self, 'emr_viz'):
             return
 
+        # Skip updates during scrolling to prevent screen tearing
+        if self._should_skip_update():
+            return
+
         try:
             # Generate new EMR data based on current parameters
             emr_data = self.generate_emr_data_from_params()
@@ -2671,10 +3071,10 @@ For detailed physics equations, see the Physics Guide tab.
         emr_canvas.pack(side="left", fill="both", expand=True)
         emr_scrollbar.pack(side="right", fill="y")
 
-        # Bind mousewheel to canvas
+        # Bind mousewheel to canvas (optimized for performance)
         def _on_emr_mousewheel(event):
             emr_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
-        emr_canvas.bind_all("<MouseWheel>", _on_emr_mousewheel)
+        emr_canvas.bind("<MouseWheel>", _on_emr_mousewheel)
 
         # EMR visualization canvas (larger for better visibility)
         self.emr_figure = plt.Figure(figsize=(14, 10), dpi=100)
@@ -2831,6 +3231,136 @@ For detailed physics equations, see the Physics Guide tab.
             self.emr_flight_logging = False
             self.status_var.set("🛑 EMR flight logging stopped")
             messagebox.showinfo("Flight Logging", "EMR flight logging has been stopped.\nData has been saved to emr_suit_log.csv")
+
+    def update_performance_status(self):
+        """Update performance status display periodically with reduced frequency for better performance"""
+        try:
+            status, color = self.performance_monitor.get_performance_status()
+            self.performance_var.set(f"{status}")
+
+            # Update performance indicator color
+            if hasattr(self, 'performance_bar'):
+                if color == "green":
+                    self.performance_bar.config(foreground="green")
+                elif color == "yellow":
+                    self.performance_bar.config(foreground="orange")
+                elif color == "red":
+                    self.performance_bar.config(foreground="red")
+
+        except Exception as e:
+            print(f"Performance status update error: {e}")
+
+        # Schedule next update in 5 seconds (reduced frequency for better performance)
+        self.root.after(5000, self.update_performance_status)
+
+    def start_background_calculations(self):
+        """Start background calculation thread"""
+        def background_calculation_worker():
+            """Background worker for physics calculations"""
+            while True:
+                try:
+                    # Wait for calculation requests
+                    if hasattr(self, 'calculation_queue') and not self.calculation_queue.empty():
+                        calc_request = self.calculation_queue.get_nowait()
+
+                        # Perform calculation in background
+                        start_time = datetime.now()
+                        result = self.perform_calculation(calc_request)
+                        end_time = datetime.now()
+
+                        # Record performance metrics
+                        calculation_time = (end_time - start_time).total_seconds()
+                        self.performance_monitor.record_calculation_time(calculation_time)
+
+                        # Send result back to UI thread
+                        ui_update = {
+                            'type': 'calculation_result',
+                            'result': result,
+                            'request': calc_request
+                        }
+                        self.ui_update_queue.put(ui_update)
+
+                    # Periodic memory cleanup
+                    if (datetime.now() - self.last_memory_cleanup).total_seconds() > 300:  # Every 5 minutes
+                        gc.collect()
+                        self.last_memory_cleanup = datetime.now()
+
+                    time.sleep(0.1)  # Small delay to prevent busy waiting
+
+                except Exception as e:
+                    print(f"Background calculation error: {e}")
+                    time.sleep(1)
+
+        # Initialize calculation queue
+        self.calculation_queue = queue.Queue()
+
+        # Start background thread
+        self.calculation_thread = threading.Thread(target=background_calculation_worker, daemon=True)
+        self.calculation_thread.start()
+
+        # Start UI update handler
+        self.handle_ui_updates()
+
+    def perform_calculation(self, request):
+        """Perform physics calculation based on request"""
+        try:
+            if request['type'] == 'ion_engine':
+                return self.calc.calculate_ion_engine(
+                    request['Va'], request['Ib'], request['gas'],
+                    self.config['ion_engine']['geometry']['A_grid'],
+                    self.config['ion_engine']['geometry']['d'],
+                    request['tau_geom'], request['tau_trans'],
+                    self.config['ion_engine']['divergence']['model'],
+                    request['sigma_deg']
+                )
+            elif request['type'] == 'hall_thruster':
+                return self.calc.calculate_hall_thruster(
+                    request['Vd'], request['mdot'], request['gas'],
+                    request['eta_acc'], request['tau_prop'],
+                    self.config['hall_thruster']['divergence']['model'],
+                    request['sigma_deg']
+                )
+        except Exception as e:
+            return {'error': str(e)}
+
+    def handle_ui_updates(self):
+        """Handle UI updates from background threads"""
+        try:
+            while not self.ui_update_queue.empty():
+                update = self.ui_update_queue.get_nowait()
+
+                if update['type'] == 'calculation_result':
+                    self.handle_calculation_result(update['result'], update['request'])
+
+        except queue.Empty:
+            pass
+        except Exception as e:
+            print(f"UI update error: {e}")
+
+        # Schedule next check (reduced frequency for better performance)
+        self.root.after(200, self.handle_ui_updates)
+
+    def handle_calculation_result(self, result, request):
+        """Handle calculation result from background thread"""
+        try:
+            if 'error' in result:
+                self.results_text.delete(1.0, tk.END)
+                self.results_text.insert(tk.END, f"❌ Calculation Error: {result['error']}")
+                self.status_var.set(f"❌ Calculation error: {result['error'][:50]}...")
+                return
+
+            self.current_results = result
+
+            if request['type'] == 'ion_engine':
+                self.display_ion_results(result)
+            else:
+                self.display_hall_results(result)
+
+            self.status_var.set("✅ Calculation complete")
+            self.progress_var.set("")
+
+        except Exception as e:
+            print(f"Result handling error: {e}")
 
     def show_about(self):
         """Show about dialog"""

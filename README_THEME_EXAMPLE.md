@@ -1,151 +1,211 @@
 # ttkthemes Dark Theme Example
 
-This repository demonstrates how to use the `ttkthemes` package to apply beautiful dark themes to tkinter/ttk applications.
+This example demonstrates how to use the `ttkthemes` package to add dark themes to tkinter/ttk applications.
 
-## 🎯 What This Example Shows
+## Installation
 
-### ✅ Completed Tasks:
-- [x] **Install ttkthemes package** - Successfully installed via pip
-- [x] **Create simple example script** - `theme_example.py` with comprehensive demo
-- [x] **Show how to change to dark theme** - Dynamic theme switching with dropdown
-- [x] **Test the example** - Verified working with multiple dark themes
+First, install the required package:
 
-### 🎨 Features Demonstrated:
-- **Easy Theme Installation**: `pip install ttkthemes`
-- **Simple Theme Application**: One-line theme switching
-- **Dynamic Theme Switching**: Change themes at runtime
-- **Professional Dark Themes**: Multiple beautiful dark theme options
-- **Widget Consistency**: All tkinter/ttk widgets styled uniformly
-
-## 🚀 Quick Start
-
-### 1. Install ttkthemes
 ```bash
 pip install ttkthemes
 ```
 
-### 2. Basic Usage
+## Features Demonstrated
+
+- ✅ Installing and importing ttkthemes
+- ✅ Applying dark themes to tkinter applications
+- ✅ Switching between different themes at runtime
+- ✅ Integrating matplotlib plots with dark themes
+- ✅ Creating professional-looking GUIs with theme support
+
+## Usage
+
+### Basic Usage
+
 ```python
+from ttkthemes import ThemedStyle
 import tkinter as tk
 from tkinter import ttk
-from ttkthemes import ThemedStyle
 
 # Create root window
 root = tk.Tk()
 
-# Initialize ttkthemes style
+# Initialize themed style
 style = ThemedStyle(root)
 
-# Apply dark theme
-style.set_theme("equilux")  # Dark theme with blue accents
+# Set a dark theme
+style.set_theme("equilux")  # Dark theme
+# OR
+style.set_theme("black")    # Pure black theme
 
-# Create your widgets normally
+# Create your widgets as usual
 button = ttk.Button(root, text="Click me!")
 button.pack()
 
 root.mainloop()
 ```
 
-### 3. Run the Example
-```bash
-python theme_example.py
+### Available Themes
+
+The `ttkthemes` package provides many themes:
+
+**Dark Themes:**
+- `equilux` - Modern dark theme with orange accents
+- `black` - Pure black theme
+
+**Light Themes:**
+- `arc` - Clean, modern light theme (default)
+- `radiance` - Ubuntu's Radiance theme
+- `ubuntu` - Ubuntu theme
+- `adapta` - Modern flat theme
+
+**Other Themes:**
+- `blue` - Blue accent theme
+- `clearlooks` - Traditional GTK theme
+- `plastik` - Plastic-like theme
+- `keramik` - KDE Keramik theme
+
+### Advanced Usage
+
+```python
+from ttkthemes import ThemedStyle
+
+class MyApp:
+    def __init__(self, root):
+        self.root = root
+        self.style = ThemedStyle(root)
+        self.current_theme = "arc"
+
+    def set_dark_theme(self):
+        """Switch to dark theme"""
+        self.current_theme = "equilux"
+        self.style.set_theme(self.current_theme)
+
+    def set_light_theme(self):
+        """Switch to light theme"""
+        self.current_theme = "arc"
+        self.style.set_theme(self.current_theme)
 ```
 
-## 🎨 Available Dark Themes
+## Running the Example
 
-The example demonstrates these beautiful dark themes:
-
-- **equilux**: Dark theme with blue accents (recommended)
-- **black**: Pure black background
-- **darkly**: Green-accented dark theme
-- **solar**: Orange-accented dark theme
-- **cyborg**: Cyberpunk-inspired theme
-- **slate**: Dark slate theme
-- **superhero**: Blue-grey accents
-- **cosmo**: Modern dark theme
-- **flatly**: Flat dark theme
-- **journal**: Minimal dark theme
-
-## 📋 Example Features
-
-The `theme_example.py` script includes:
-
-- **Theme Selector**: Dropdown to switch between themes
-- **Demo Widgets**: Buttons, progress bars, entry fields, checkboxes, radio buttons
-- **Real-time Updates**: Instant theme switching
-- **Theme Descriptions**: Information about each theme
-- **Error Handling**: Graceful handling of theme application errors
-
-## 🔧 Integration with Existing Code
-
-To add dark themes to your existing tkinter application:
-
-1. **Install ttkthemes**:
+1. Make sure ttkthemes is installed:
    ```bash
    pip install ttkthemes
    ```
 
-2. **Modify your code**:
-   ```python
-   # Add these imports
-   from ttkthemes import ThemedStyle
-
-   # Replace your style initialization
-   # OLD: style = ttk.Style()
-   # NEW:
-   style = ThemedStyle(root)
-   style.set_theme("equilux")  # Choose your preferred dark theme
+2. Run the example:
+   ```bash
+   python theme_example.py
    ```
 
-3. **That's it!** All your existing ttk widgets will automatically use the dark theme.
+3. Try different themes using the dropdown menu
 
-## 🎯 Advanced Usage
+4. Click "Switch to Dark Theme" for instant dark mode
 
-### Custom Theme Configuration
+5. Update the plot and see how it adapts to the theme
+
+## Integration with Matplotlib
+
+For matplotlib integration with dark themes:
+
 ```python
-# Configure specific widget styles
-style.configure('TButton', font=('Arial', 10, 'bold'))
-style.configure('TLabel', foreground='#ffffff')
+import matplotlib.pyplot as plt
 
-# Apply to specific widgets
-button = ttk.Button(root, text="Styled Button", style='TButton')
+def configure_dark_matplotlib():
+    """Configure matplotlib for dark themes"""
+    plt.style.use('dark_background')
+    plt.rcParams['figure.facecolor'] = '#2a2a2a'
+    plt.rcParams['axes.facecolor'] = '#3a3a3a'
+    plt.rcParams['axes.edgecolor'] = '#555555'
+    plt.rcParams['axes.labelcolor'] = 'white'
+    plt.rcParams['text.color'] = 'white'
+    plt.rcParams['xtick.color'] = 'white'
+    plt.rcParams['ytick.color'] = 'white'
+    plt.rcParams['grid.color'] = '#555555'
+
+def configure_light_matplotlib():
+    """Configure matplotlib for light themes"""
+    plt.style.use('default')
+    plt.rcParams['figure.facecolor'] = 'white'
+    plt.rcParams['axes.facecolor'] = 'white'
+    plt.rcParams['axes.edgecolor'] = 'black'
+    plt.rcParams['axes.labelcolor'] = 'black'
+    plt.rcParams['text.color'] = 'black'
+    plt.rcParams['xtick.color'] = 'black'
+    plt.rcParams['ytick.color'] = 'black'
+    plt.rcParams['grid.color'] = '#cccccc'
 ```
 
-### Theme Information
-```python
-# Get available themes
-available_themes = style.themes
-print("Available themes:", available_themes)
+## Benefits of Using ttkthemes
 
-# Get current theme
-current_theme = style.theme_use()
-print("Current theme:", current_theme)
+1. **Easy Theme Switching** - Change themes with a single line of code
+2. **Professional Appearance** - High-quality, well-designed themes
+3. **Cross-Platform** - Works on Windows, macOS, and Linux
+4. **Matplotlib Integration** - Automatic plot theming
+5. **No Custom Styling Required** - Pre-built themes look great out of the box
+
+## Comparison with Manual Styling
+
+**Manual Styling (without ttkthemes):**
+```python
+# Lots of manual configuration needed
+style.configure('TButton', background='#333333', foreground='white')
+style.configure('TLabel', background='#1a1a1a', foreground='white')
+style.configure('TFrame', background='#1a1a1a')
+# ... many more lines for each widget type
 ```
 
-## 🐛 Troubleshooting
+**With ttkthemes:**
+```python
+# One line to set a complete theme
+style.set_theme("equilux")
+```
 
-### Common Issues:
-1. **Import Error**: Make sure ttkthemes is installed (`pip install ttkthemes`)
-2. **Theme Not Found**: Check theme name spelling against `style.themes`
-3. **Widget Not Styled**: Ensure you're using ttk widgets, not tk widgets
+## Troubleshooting
 
-### Theme Compatibility:
-- All themes work on Windows, macOS, and Linux
-- Some themes may render slightly differently on different platforms
-- The `equilux` theme is recommended as the most consistent dark theme
+### Import Error
+If you get an import error, make sure ttkthemes is installed:
+```bash
+pip install ttkthemes
+```
 
-## 📚 Resources
+### Theme Not Applying
+Some themes may not be available on all platforms. Try a different theme:
+```python
+# Try these themes in order of preference
+themes_to_try = ["equilux", "black", "arc", "clearlooks"]
+for theme in themes_to_try:
+    try:
+        style.set_theme(theme)
+        break
+    except:
+        continue
+```
 
-- **ttkthemes Documentation**: https://ttkthemes.readthedocs.io/
-- **tkinter Documentation**: https://docs.python.org/3/library/tkinter.html
-- **Theme Gallery**: Run `theme_example.py` to see all themes in action
+### Matplotlib Not Updating
+If matplotlib plots don't update with theme changes, manually refresh them:
+```python
+canvas.draw()  # or canvas.draw_idle()
+```
 
-## 🎉 Success!
+## Advanced Features
 
-The ttkthemes package has been successfully installed and demonstrated. You now have a working example of how to apply beautiful dark themes to your tkinter applications with minimal code changes!
+The `ttkthemes` package also supports:
+- Custom theme creation
+- Theme callbacks
+- Advanced styling options
+- Integration with other tkinter extensions
 
-**Key Takeaway**: Adding dark themes to tkinter apps is now as simple as:
-1. `pip install ttkthemes`
-2. `from ttkthemes import ThemedStyle`
-3. `style = ThemedStyle(root)`
-4. `style.set_theme("equilux")`
+Check the [ttkthemes documentation](https://ttkthemes.readthedocs.io/) for more advanced features.
+
+## Example in the Ionic Propulsion Lab
+
+The main `gui_app.py` in the ionic propulsion lab demonstrates advanced usage of ttkthemes with:
+- Dark theme application
+- Performance monitoring
+- Real-time theme switching
+- Matplotlib integration
+- Custom styling on top of themes
+
+Run `python ionic_propulsion_lab/gui_app.py` to see a full-featured application using ttkthemes.

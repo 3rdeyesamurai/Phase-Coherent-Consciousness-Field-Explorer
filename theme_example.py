@@ -4,213 +4,266 @@ Simple Example: Using ttkthemes for Dark Theme in Tkinter Applications
 ========================================================================
 
 This example demonstrates how to:
-1. Install and import ttkthemes
+1. Install and use the ttkthemes package
 2. Apply dark themes to tkinter/ttk applications
-3. Switch between different themes dynamically
-4. Customize theme colors and styling
+3. Create a simple GUI with theme switching capability
 
 Requirements:
 - pip install ttkthemes
-- Python 3.6+
+
+Usage:
+- Run this script to see theme switching in action
+- Click the "Switch Theme" button to toggle between light and dark themes
 """
 
 import tkinter as tk
 from tkinter import ttk, messagebox
 from ttkthemes import ThemedStyle
-import sys
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import numpy as np
+
 
 class ThemeExampleApp:
-    """Simple application demonstrating ttkthemes dark theme usage"""
+    """Simple application demonstrating ttkthemes usage"""
 
     def __init__(self, root):
         self.root = root
-        self.root.title("🎨 ttkthemes Dark Theme Example")
-        self.root.geometry("600x500")
+        self.root.title("🚀 ttkthemes Dark Theme Example")
+        self.root.geometry("800x600")
 
-        # Initialize ttkthemes style
+        # Initialize theme system
         self.style = ThemedStyle(self.root)
+        self.current_theme = "arc"  # Default light theme
 
-        # Define available themes (focus on dark themes)
-        self.themes = {
-            "equilux": "Dark theme with blue accents",
-            "black": "Pure black theme",
-            "darkly": "Dark theme with green accents",
-            "solar": "Dark theme with orange accents",
-            "superhero": "Dark theme with blue-grey accents",
-            "cyborg": "Dark cyberpunk theme",
-            "slate": "Dark slate theme",
-            "cosmo": "Modern dark theme",
-            "flatly": "Flat dark theme",
-            "journal": "Minimal dark theme"
-        }
+        # Create main layout
+        self.create_main_layout()
 
-        # Create the GUI
-        self.create_widgets()
+        # Apply initial theme
+        self.apply_theme()
 
-        # Apply initial dark theme
-        self.apply_theme("equilux")
+        # Create sample plot
+        self.create_sample_plot()
 
-    def create_widgets(self):
-        """Create the main application widgets"""
-        # Main frame
-        main_frame = ttk.Frame(self.root, padding=20)
-        main_frame.pack(fill=tk.BOTH, expand=True)
+    def create_main_layout(self):
+        """Create the main application layout"""
+        # Main container
+        main_frame = ttk.Frame(self.root)
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
 
         # Title
         title_label = ttk.Label(
             main_frame,
-            text="🦸 ttkthemes Dark Theme Demo",
+            text="ttkthemes Dark Theme Demonstration",
             font=("Arial", 16, "bold")
         )
         title_label.pack(pady=(0, 20))
 
-        # Theme selection
-        theme_frame = ttk.LabelFrame(main_frame, text="🎨 Theme Selection", padding=10)
+        # Theme control section
+        theme_frame = ttk.LabelFrame(main_frame, text="Theme Controls", padding=10)
         theme_frame.pack(fill=tk.X, pady=(0, 20))
 
-        ttk.Label(theme_frame, text="Choose Dark Theme:").pack(anchor=tk.W)
+        # Theme selection
+        ttk.Label(theme_frame, text="Available Themes:").grid(row=0, column=0, sticky='w', pady=5)
 
-        # Theme combobox
-        self.theme_var = tk.StringVar(value="equilux")
+        self.theme_var = tk.StringVar(value=self.current_theme)
         theme_combo = ttk.Combobox(
             theme_frame,
             textvariable=self.theme_var,
-            values=list(self.themes.keys()),
-            state="readonly"
+            values=self.get_available_themes(),
+            state="readonly",
+            width=20
         )
-        theme_combo.pack(fill=tk.X, pady=(5, 10))
-        theme_combo.bind("<<ComboboxSelected>>", self.on_theme_change)
+        theme_combo.grid(row=0, column=1, padx=(10, 0), pady=5)
+        theme_combo.bind("<<ComboboxSelected>>", self.on_theme_selected)
 
-        # Theme description
-        self.desc_label = ttk.Label(theme_frame, text=self.themes["equilux"])
-        self.desc_label.pack(anchor=tk.W)
+        # Quick theme switch button
+        ttk.Button(
+            theme_frame,
+            text="🔄 Switch to Dark Theme",
+            command=self.switch_to_dark_theme
+        ).grid(row=0, column=2, padx=(20, 0), pady=5)
 
-        # Demo widgets section
-        demo_frame = ttk.LabelFrame(main_frame, text="🎯 Demo Widgets", padding=10)
-        demo_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 20))
+        # Sample controls section
+        controls_frame = ttk.LabelFrame(main_frame, text="Sample Controls", padding=10)
+        controls_frame.pack(fill=tk.X, pady=(0, 20))
 
-        # Buttons
-        button_frame = ttk.Frame(demo_frame)
-        button_frame.pack(fill=tk.X, pady=(0, 10))
+        # Sample input controls
+        ttk.Label(controls_frame, text="Sample Input:").grid(row=0, column=0, sticky='w', pady=5)
 
-        ttk.Button(button_frame, text="🚀 Launch", command=self.launch_demo).pack(side=tk.LEFT, padx=(0, 10))
-        ttk.Button(button_frame, text="⚙️ Settings", command=self.settings_demo).pack(side=tk.LEFT, padx=(0, 10))
-        ttk.Button(button_frame, text="❌ Cancel", command=self.cancel_demo).pack(side=tk.LEFT)
+        self.input_var = tk.StringVar(value="Hello World!")
+        ttk.Entry(
+            controls_frame,
+            textvariable=self.input_var,
+            width=30
+        ).grid(row=0, column=1, padx=(10, 0), pady=5)
 
-        # Progress bar
-        ttk.Label(demo_frame, text="Progress:").pack(anchor=tk.W)
-        self.progress = ttk.Progressbar(demo_frame, mode='determinate', maximum=100, value=75)
-        self.progress.pack(fill=tk.X, pady=(0, 10))
+        # Sample buttons
+        button_frame = ttk.Frame(controls_frame)
+        button_frame.grid(row=1, column=0, columnspan=3, pady=(10, 0))
 
-        # Entry field
-        ttk.Label(demo_frame, text="Enter your name:").pack(anchor=tk.W)
-        self.name_entry = ttk.Entry(demo_frame)
-        self.name_entry.pack(fill=tk.X, pady=(0, 10))
-        self.name_entry.insert(0, "John Doe")
+        ttk.Button(
+            button_frame,
+            text="📊 Update Plot",
+            command=self.update_plot
+        ).pack(side=tk.LEFT, padx=(0, 10))
 
-        # Checkboxes
-        check_frame = ttk.Frame(demo_frame)
-        check_frame.pack(fill=tk.X, pady=(0, 10))
+        ttk.Button(
+            button_frame,
+            text="ℹ️ Show Info",
+            command=self.show_info
+        ).pack(side=tk.LEFT, padx=(0, 10))
 
-        self.dark_mode = tk.BooleanVar(value=True)
-        ttk.Checkbutton(check_frame, text="Dark Mode", variable=self.dark_mode).pack(side=tk.LEFT, padx=(0, 20))
+        ttk.Button(
+            button_frame,
+            text="❌ Exit",
+            command=self.root.quit
+        ).pack(side=tk.LEFT)
 
-        self.notifications = tk.BooleanVar(value=True)
-        ttk.Checkbutton(check_frame, text="Notifications", variable=self.notifications).pack(side=tk.LEFT)
+        # Plot area
+        plot_frame = ttk.LabelFrame(main_frame, text="Sample Plot", padding=10)
+        plot_frame.pack(fill=tk.BOTH, expand=True)
 
-        # Radio buttons
-        ttk.Label(demo_frame, text="Difficulty Level:").pack(anchor=tk.W)
-        radio_frame = ttk.Frame(demo_frame)
-        radio_frame.pack(fill=tk.X, pady=(0, 10))
+        # Create matplotlib figure
+        self.figure = plt.Figure(figsize=(8, 4), dpi=100)
+        self.canvas = FigureCanvasTkAgg(self.figure, plot_frame)
+        self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
-        self.difficulty = tk.StringVar(value="medium")
-        ttk.Radiobutton(radio_frame, text="Easy", variable=self.difficulty, value="easy").pack(side=tk.LEFT, padx=(0, 10))
-        ttk.Radiobutton(radio_frame, text="Medium", variable=self.difficulty, value="medium").pack(side=tk.LEFT, padx=(0, 10))
-        ttk.Radiobutton(radio_frame, text="Hard", variable=self.difficulty, value="hard").pack(side=tk.LEFT)
+    def get_available_themes(self):
+        """Get list of available themes from ttkthemes"""
+        return [
+            "arc",          # Clean, modern theme (default)
+            "equilux",      # Dark theme
+            "black",        # Pure black theme
+            "blue",         # Blue accent theme
+            "clearlooks",   # Traditional GTK theme
+            "radiance",     # Ubuntu's Radiance theme
+            "ubuntu",       # Ubuntu theme
+            "adapta",       # Modern flat theme
+            "plastik",      # Plastic-like theme
+            "keramik",      # KDE Keramik theme
+        ]
 
-        # Information section
-        info_frame = ttk.LabelFrame(main_frame, text="ℹ️ Theme Information", padding=10)
-        info_frame.pack(fill=tk.X)
-
-        info_text = """
-🎨 ttkthemes provides beautiful pre-built themes for tkinter applications.
-
-Key Features:
-• Easy theme switching with single line of code
-• Professional dark themes included
-• Consistent styling across all widgets
-• Customizable colors and fonts
-• Cross-platform compatibility
-
-Popular Dark Themes:
-• equilux: Blue-accented dark theme
-• black: Pure black background
-• darkly: Green-accented dark theme
-• solar: Orange-accented dark theme
-• cyborg: Cyberpunk-inspired theme
-
-Usage:
-from ttkthemes import ThemedStyle
-style = ThemedStyle(root)
-style.set_theme("equilux")  # Apply dark theme
-        """
-
-        info_label = ttk.Label(info_frame, text=info_text, justify=tk.LEFT)
-        info_label.pack(anchor=tk.W)
-
-    def apply_theme(self, theme_name):
-        """Apply the selected theme"""
+    def apply_theme(self):
+        """Apply the current theme to the application"""
         try:
-            self.style.set_theme(theme_name)
-            self.desc_label.config(text=self.themes.get(theme_name, "Unknown theme"))
-            print(f"✅ Applied theme: {theme_name}")
+            self.style.set_theme(self.current_theme)
+
+            # Configure matplotlib for dark themes
+            if self.current_theme in ["equilux", "black"]:
+                self.configure_dark_matplotlib()
+            else:
+                self.configure_light_matplotlib()
+
+            # Update plot if it exists
+            if hasattr(self, 'ax'):
+                self.update_plot()
+
         except Exception as e:
-            print(f"❌ Error applying theme {theme_name}: {e}")
-            messagebox.showerror("Theme Error", f"Could not apply theme {theme_name}: {e}")
+            messagebox.showerror("Theme Error", f"Could not apply theme '{self.current_theme}': {e}")
 
-    def on_theme_change(self, event=None):
-        """Handle theme selection change"""
-        selected_theme = self.theme_var.get()
-        self.apply_theme(selected_theme)
+    def configure_dark_matplotlib(self):
+        """Configure matplotlib for dark themes"""
+        plt.style.use('dark_background')
+        plt.rcParams['figure.facecolor'] = '#2a2a2a'
+        plt.rcParams['axes.facecolor'] = '#3a3a3a'
+        plt.rcParams['axes.edgecolor'] = '#555555'
+        plt.rcParams['axes.labelcolor'] = 'white'
+        plt.rcParams['text.color'] = 'white'
+        plt.rcParams['xtick.color'] = 'white'
+        plt.rcParams['ytick.color'] = 'white'
+        plt.rcParams['grid.color'] = '#555555'
 
-    def launch_demo(self):
-        """Demo launch button action"""
-        name = self.name_entry.get()
-        difficulty = self.difficulty.get()
-        dark_mode = "enabled" if self.dark_mode.get() else "disabled"
-        notifications = "enabled" if self.notifications.get() else "disabled"
+    def configure_light_matplotlib(self):
+        """Configure matplotlib for light themes"""
+        plt.style.use('default')
+        plt.rcParams['figure.facecolor'] = 'white'
+        plt.rcParams['axes.facecolor'] = 'white'
+        plt.rcParams['axes.edgecolor'] = 'black'
+        plt.rcParams['axes.labelcolor'] = 'black'
+        plt.rcParams['text.color'] = 'black'
+        plt.rcParams['xtick.color'] = 'black'
+        plt.rcParams['ytick.color'] = 'black'
+        plt.rcParams['grid.color'] = '#cccccc'
 
-        message = f"""
-🚀 Launch Configuration:
+    def on_theme_selected(self, event=None):
+        """Handle theme selection from combobox"""
+        new_theme = self.theme_var.get()
+        if new_theme != self.current_theme:
+            self.current_theme = new_theme
+            self.apply_theme()
 
-Name: {name}
-Difficulty: {difficulty.title()}
-Dark Mode: {dark_mode}
-Notifications: {notifications}
-Theme: {self.theme_var.get()}
+    def switch_to_dark_theme(self):
+        """Quick switch to a dark theme"""
+        self.current_theme = "equilux"  # Dark theme
+        self.theme_var.set(self.current_theme)
+        self.apply_theme()
 
-Ready for launch! 🌟
+    def create_sample_plot(self):
+        """Create a sample plot"""
+        self.ax = self.figure.add_subplot(111)
+
+        # Generate sample data
+        x = np.linspace(0, 10, 100)
+        y = np.sin(x) * np.exp(-x/10)
+
+        self.line, = self.ax.plot(x, y, 'b-', linewidth=2, label='Sample Data')
+        self.ax.set_xlabel('X Values')
+        self.ax.set_ylabel('Y Values')
+        self.ax.set_title('Sample Plot with Theme Support')
+        self.ax.grid(True, alpha=0.3)
+        self.ax.legend()
+
+        self.canvas.draw()
+
+    def update_plot(self):
+        """Update the sample plot with new data"""
+        if not hasattr(self, 'ax'):
+            return
+
+        # Generate new sample data based on input
+        input_text = self.input_var.get()
+        try:
+            # Try to parse input as a number for frequency
+            frequency = float(input_text) if input_text.replace('.', '').isdigit() else 1.0
+        except:
+            frequency = 1.0
+
+        x = np.linspace(0, 10, 100)
+        y = np.sin(frequency * x) * np.exp(-x/10)
+
+        self.line.set_ydata(y)
+        self.ax.set_title(f'Sample Plot: sin({frequency}x) * exp(-x/10)')
+
+        self.canvas.draw()
+
+    def show_info(self):
+        """Show information about the current theme"""
+        info_text = f"""
+Current Theme Information:
+═══════════════════════════
+
+Theme Name: {self.current_theme}
+Theme Type: {'Dark' if self.current_theme in ['equilux', 'black'] else 'Light'}
+
+Available Themes:
+{chr(10).join('• ' + theme for theme in self.get_available_themes())}
+
+Usage Tips:
+• Use 'equilux' for a modern dark theme
+• Use 'arc' for a clean light theme
+• Use 'black' for a pure black theme
+• All themes support matplotlib integration
+
+The ttkthemes package provides many more themes!
+Check the documentation for the complete list.
         """
 
-        messagebox.showinfo("Launch Demo", message)
-
-    def settings_demo(self):
-        """Demo settings button action"""
-        messagebox.showinfo("Settings", "⚙️ Settings panel would open here")
-
-    def cancel_demo(self):
-        """Demo cancel button action"""
-        if messagebox.askyesno("Cancel", "Are you sure you want to cancel?"):
-            self.name_entry.delete(0, tk.END)
-            self.progress.config(value=0)
-            print("❌ Operation cancelled")
+        messagebox.showinfo("Theme Information", info_text)
 
 
 def main():
     """Main application entry point"""
-    print("🎨 Starting ttkthemes Dark Theme Example...")
-    print("Available themes:", list(ThemedStyle().themes))
-
     root = tk.Tk()
     app = ThemeExampleApp(root)
     root.mainloop()
