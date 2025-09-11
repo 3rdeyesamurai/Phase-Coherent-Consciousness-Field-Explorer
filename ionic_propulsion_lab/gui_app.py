@@ -84,6 +84,19 @@ class IonicPropulsionGUI:
         self.style.configure('TScrollbar', background=self.dark_colors['scrollbar'],
                            troughcolor=self.dark_colors['bg_secondary'])
 
+        # Enhanced button styling for better UX
+        self.style.configure('Accent.TButton',
+                           background=self.dark_colors['fg_accent'],
+                           foreground=self.dark_colors['bg_primary'],
+                           font=('Arial', 9, 'bold'))
+        self.style.map('Accent.TButton',
+                      background=[('active', '#ff8c42')])  # Lighter orange on hover
+
+        # Status bar styling
+        self.style.configure('Status.TFrame',
+                           background=self.dark_colors['bg_secondary'],
+                           relief='flat')
+
         # Apply theme to existing widgets
         self.root.option_add('*TCombobox*Listbox.background', self.dark_colors['bg_secondary'])
         self.root.option_add('*TCombobox*Listbox.foreground', self.dark_colors['fg_primary'])
@@ -141,25 +154,40 @@ class IonicPropulsionGUI:
         self.output_folder = tk.StringVar(
             value=os.path.join(os.getcwd(), 'output'))
 
-        # Status bar (create early for error handling)
-        self.status_var = tk.StringVar()
-        self.status_var.set(
-            "Initializing - Enhanced Ionic Propulsion Analysis Tool")
-        status_bar = ttk.Label(
-            self.root,
-            textvariable=self.status_var,
-            relief=tk.SUNKEN)
-        status_bar.pack(side=tk.BOTTOM, fill=tk.X)
+        # Enhanced status bar with better visual feedback
+        status_frame = ttk.Frame(self.root, style="Status.TFrame")
+        status_frame.pack(side=tk.BOTTOM, fill=tk.X)
 
-        # Mission feasibility indicator
+        # Main status indicator
+        self.status_var = tk.StringVar()
+        self.status_var.set("🚀 Ready - Enhanced Ionic Propulsion Analysis Tool")
+        status_bar = ttk.Label(
+            status_frame,
+            textvariable=self.status_var,
+            relief=tk.FLAT,
+            padding=(10, 5))
+        status_bar.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        # Mission feasibility indicator with color coding
         self.mission_status_var = tk.StringVar()
-        self.mission_status_var.set("🟡 Mission Status: Not Analyzed")
+        self.mission_status_var.set("🟡 Mission: Not Analyzed")
         mission_status_bar = ttk.Label(
-            self.root,
+            status_frame,
             textvariable=self.mission_status_var,
-            relief=tk.SUNKEN,
-            background=self.dark_colors['bg_secondary'])
-        mission_status_bar.pack(side=tk.BOTTOM, fill=tk.X)
+            relief=tk.FLAT,
+            padding=(10, 5))
+        mission_status_bar.pack(side=tk.RIGHT)
+
+        # Progress indicator for long operations
+        self.progress_var = tk.StringVar()
+        self.progress_var.set("")
+        progress_bar = ttk.Label(
+            status_frame,
+            textvariable=self.progress_var,
+            relief=tk.FLAT,
+            padding=(10, 5),
+            foreground="cyan")
+        progress_bar.pack(side=tk.RIGHT)
 
         # Parametric sweep configuration variables
         self.sweep_config = {
@@ -360,36 +388,43 @@ class IonicPropulsionGUI:
         self.right_panel = right_panel
 
     def create_parameter_controls(self):
-        """Create parameter control panel"""
-        # Thruster type selection
-        type_frame = ttk.LabelFrame(
+        """Create parameter control panel with improved UX"""
+        # Core Configuration Section
+        config_frame = ttk.LabelFrame(
             self.left_panel,
-            text="🚀 Thruster Type",
+            text="⚙️ Core Configuration",
             padding=10)
-        type_frame.pack(fill=tk.X, pady=(0, 10))
+        config_frame.pack(fill=tk.X, pady=(0, 15))
+
+        # Thruster type selection with better layout
+        ttk.Label(config_frame, text="Thruster Type:",
+                  font=("Arial", 10, "bold")).pack(anchor=tk.W, pady=(0, 5))
+
+        thruster_frame = ttk.Frame(config_frame)
+        thruster_frame.pack(fill=tk.X, pady=(0, 10))
 
         self.thruster_type = tk.StringVar(value="ion")
         ttk.Radiobutton(
-            type_frame,
-            text="Ion Engine",
+            thruster_frame,
+            text="🚀 Ion Engine",
             variable=self.thruster_type,
             value="ion",
             command=self.update_parameter_controls).pack(
-            anchor=tk.W)
+            side=tk.LEFT, padx=(0, 20))
         ttk.Radiobutton(
-            type_frame,
-            text="Hall Thruster",
+            thruster_frame,
+            text="🔄 Hall Thruster",
             variable=self.thruster_type,
             value="hall",
             command=self.update_parameter_controls).pack(
-            anchor=tk.W)
+            side=tk.LEFT)
 
-        # Gas selection
-        gas_frame = ttk.LabelFrame(
-            self.left_panel,
-            text="🌍 Propellant Gas",
-            padding=10)
-        gas_frame.pack(fill=tk.X, pady=(0, 10))
+        # Gas selection with better labeling
+        ttk.Label(config_frame, text="Propellant Gas:",
+                  font=("Arial", 10, "bold")).pack(anchor=tk.W, pady=(5, 5))
+
+        gas_frame = ttk.Frame(config_frame)
+        gas_frame.pack(fill=tk.X, pady=(0, 5))
 
         self.gas_var = tk.StringVar(value="Xenon")
         gas_combo = ttk.Combobox(
@@ -401,9 +436,13 @@ class IonicPropulsionGUI:
                 "Krypton",
                 "Argon",
                 "WaterOH"],
-            state="readonly")
-        gas_combo.pack(fill=tk.X)
+            state="readonly",
+            width=15)
+        gas_combo.pack(side=tk.LEFT, padx=(0, 10))
         gas_combo.bind("<<ComboboxSelected>>", self.update_calculations)
+
+        ttk.Label(gas_frame, text="Most efficient for electric propulsion",
+                 foreground="gray", font=("Arial", 8)).pack(side=tk.LEFT)
 
         # Mission planning parameters
         self.create_mission_planning_controls()
@@ -470,20 +509,46 @@ class IonicPropulsionGUI:
         # Sweep parameter controls
         self.create_sweep_controls()
 
-        # Control buttons
-        button_frame = ttk.Frame(self.left_panel)
-        button_frame.pack(fill=tk.X, pady=(10, 0))
+        # Quick Actions Section
+        quick_actions_frame = ttk.LabelFrame(
+            self.left_panel,
+            text="⚡ Quick Actions",
+            padding=10)
+        quick_actions_frame.pack(fill=tk.X, pady=(15, 10))
+
+        # Primary action buttons with better layout
+        primary_buttons_frame = ttk.Frame(quick_actions_frame)
+        primary_buttons_frame.pack(fill=tk.X, pady=(0, 8))
 
         ttk.Button(
-            button_frame,
+            primary_buttons_frame,
             text="🔄 Update Calculations",
-            command=self.update_calculations).pack(
-            fill=tk.X,
-            pady=(
-                0,
-                5))
-        ttk.Button(button_frame, text="📊 Run Parametric Sweep",
-                   command=self.run_parametric_sweep).pack(fill=tk.X)
+            command=self.update_calculations,
+            style="Accent.TButton").pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
+
+        ttk.Button(
+            primary_buttons_frame,
+            text="📊 Run Parametric Sweep",
+            command=self.run_parametric_sweep).pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        # Secondary actions
+        secondary_buttons_frame = ttk.Frame(quick_actions_frame)
+        secondary_buttons_frame.pack(fill=tk.X)
+
+        ttk.Button(
+            secondary_buttons_frame,
+            text="💾 Export Results",
+            command=self.export_results).pack(side=tk.LEFT, padx=(0, 5))
+
+        ttk.Button(
+            secondary_buttons_frame,
+            text="🔧 Run Diagnostics",
+            command=self.run_diagnostics).pack(side=tk.LEFT, padx=(0, 5))
+
+        ttk.Button(
+            secondary_buttons_frame,
+            text="📚 Help",
+            command=self.show_parameter_help).pack(side=tk.LEFT)
 
         self.update_parameter_controls()
 
@@ -1493,9 +1558,15 @@ For detailed documentation, see README.md and USER_GUIDE.md
             self.status_var.set("❌ Calculator initialization failed")
 
     def update_calculations(self, *args):
-        """Update real-time calculations"""
+        """Update real-time calculations with improved UX feedback"""
         if not self.calc:
+            self.status_var.set("❌ Calculator not initialized")
             return
+
+        # Provide immediate visual feedback
+        self.status_var.set("🔄 Calculating...")
+        self.progress_var.set("Processing...")
+        self.root.update_idletasks()  # Force UI update
 
         try:
             if self.thruster_type.get() == "ion":
@@ -1531,10 +1602,15 @@ For detailed documentation, see README.md and USER_GUIDE.md
             self.current_results = result
             self.update_plot()
 
+            # Success feedback
+            self.status_var.set("✅ Calculation complete")
+            self.progress_var.set("")
+
         except Exception as e:
             self.results_text.delete(1.0, tk.END)
             self.results_text.insert(tk.END, f"❌ Calculation Error: {e}")
             self.status_var.set(f"❌ Calculation error: {str(e)[:50]}...")
+            self.progress_var.set("")
 
     def update_mission_calculations(self, *args):
         """Update mission-related calculations when parameters change"""
