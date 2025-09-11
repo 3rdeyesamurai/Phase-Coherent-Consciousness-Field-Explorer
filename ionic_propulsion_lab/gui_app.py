@@ -2607,7 +2607,7 @@ For detailed physics equations, see the Physics Guide tab.
         emr_alerts_frame.pack(fill=tk.X, pady=(10, 0))
 
         self.emr_alert_text = tk.Text(emr_alerts_frame, height=3, wrap=tk.WORD,
-                                    bg='#fffacd', fg='red', font=('Arial', 9))
+                                    bg=self.dark_colors['bg_secondary'], fg='red', font=('Arial', 9))
         self.emr_alert_text.pack(fill=tk.X)
         self.emr_alert_text.insert(tk.END, "EMR system initializing... No alerts at this time.")
         self.emr_alert_text.config(state=tk.DISABLED)
