@@ -611,7 +611,7 @@ class IonicPropulsionGUI:
             width=8).pack(side=tk.RIGHT)
 
         ttk.Label(self.mission_frame, text="W (watts)",
-                  foreground="blue").pack(anchor=tk.W, padx=(0, 5))
+                  foreground="yellow").pack(anchor=tk.W, padx=(0, 5))
 
         # Target Δv input
         ttk.Label(self.mission_frame, text="Target Δv (m/s)",
@@ -634,7 +634,7 @@ class IonicPropulsionGUI:
             width=8).pack(side=tk.RIGHT)
 
         ttk.Label(self.mission_frame, text="m/s (meters per second)",
-                  foreground="blue").pack(anchor=tk.W, padx=(0, 5))
+                  foreground="yellow").pack(anchor=tk.W, padx=(0, 5))
 
         # Mission time input
         ttk.Label(self.mission_frame, text="Mission Time (days)",
@@ -657,7 +657,7 @@ class IonicPropulsionGUI:
             width=8).pack(side=tk.RIGHT)
 
         ttk.Label(self.mission_frame, text="days",
-                  foreground="blue").pack(anchor=tk.W, padx=(0, 5))
+                  foreground="yellow").pack(anchor=tk.W, padx=(0, 5))
 
         # Array design inputs
         ttk.Label(self.mission_frame, text="Array Design",
@@ -702,7 +702,7 @@ class IonicPropulsionGUI:
             width=8).pack(side=tk.RIGHT)
 
         ttk.Label(self.mission_frame, text="kW per engine",
-                  foreground="blue").pack(anchor=tk.W, padx=(0, 5))
+                  foreground="yellow").pack(anchor=tk.W, padx=(0, 5))
 
         # Xenon budget input
         ttk.Label(self.mission_frame, text="Xenon Budget (kg)",
@@ -725,7 +725,7 @@ class IonicPropulsionGUI:
             width=8).pack(side=tk.RIGHT)
 
         ttk.Label(self.mission_frame, text="kg (kilograms)",
-                  foreground="blue").pack(anchor=tk.W, padx=(0, 5))
+                  foreground="yellow").pack(anchor=tk.W, padx=(0, 5))
 
         # Mission analysis button
         ttk.Button(
@@ -987,7 +987,7 @@ class IonicPropulsionGUI:
         va_label.pack(side=tk.RIGHT)
 
         ttk.Label(self.ion_frame, text="V (volts)",
-                  foreground="blue").pack(anchor=tk.W, padx=(0, 5))
+                  foreground="yellow").pack(anchor=tk.W, padx=(0, 5))
 
         # Beam Current
         ttk.Label(self.ion_frame, text="Beam Current (Ib)",
@@ -1009,7 +1009,7 @@ class IonicPropulsionGUI:
         ib_label.pack(side=tk.RIGHT)
 
         ttk.Label(self.ion_frame, text="A (amperes)",
-                  foreground="blue").pack(anchor=tk.W, padx=(0, 5))
+                  foreground="yellow").pack(anchor=tk.W, padx=(0, 5))
 
         # Grid Geometry
         ttk.Label(self.ion_frame, text="Grid Parameters",
@@ -1086,7 +1086,7 @@ class IonicPropulsionGUI:
             side=tk.RIGHT)
 
         ttk.Label(self.ion_frame, text="degrees (°) - RMS half-angle",
-                  foreground="blue").pack(anchor=tk.W, padx=(0, 5))
+                  foreground="yellow").pack(anchor=tk.W, padx=(0, 5))
 
     def create_hall_controls(self):
         """Create Hall thruster parameter controls"""
@@ -1116,7 +1116,7 @@ class IonicPropulsionGUI:
         vd_label.pack(side=tk.RIGHT)
 
         ttk.Label(self.hall_frame, text="V (volts)",
-                  foreground="blue").pack(anchor=tk.W, padx=(0, 5))
+                  foreground="yellow").pack(anchor=tk.W, padx=(0, 5))
 
         # Mass Flow Rate
         ttk.Label(self.hall_frame, text="Mass Flow Rate (ṁ)",
@@ -1138,7 +1138,7 @@ class IonicPropulsionGUI:
         mdot_label.pack(side=tk.RIGHT)
 
         ttk.Label(self.hall_frame, text="mg/s (milligrams per second)",
-                  foreground="blue").pack(anchor=tk.W, padx=(0, 5))
+                  foreground="yellow").pack(anchor=tk.W, padx=(0, 5))
 
         # Acceleration Efficiency
         ttk.Label(
@@ -1211,7 +1211,7 @@ class IonicPropulsionGUI:
             side=tk.RIGHT)
 
         ttk.Label(self.hall_frame, text="degrees (°) - Full cone angle",
-                  foreground="blue").pack(anchor=tk.W, padx=(0, 5))
+                  foreground="yellow").pack(anchor=tk.W, padx=(0, 5))
 
     def create_results_display(self):
         """Create results display panel"""
@@ -2220,7 +2220,7 @@ For detailed physics equations, see the Physics Guide tab.
             width=8).pack(side=tk.RIGHT)
 
         ttk.Label(self.emr_frame, text="A (amperes)",
-                  foreground="blue").pack(anchor=tk.W, padx=(0, 5))
+                  foreground="yellow").pack(anchor=tk.W, padx=(0, 5))
 
         # Distance control
         ttk.Label(self.emr_frame, text="Coil Distance (m)",
@@ -2243,7 +2243,7 @@ For detailed physics equations, see the Physics Guide tab.
             width=8).pack(side=tk.RIGHT)
 
         ttk.Label(self.emr_frame, text="m (meters)",
-                  foreground="blue").pack(anchor=tk.W, padx=(0, 5))
+                  foreground="yellow").pack(anchor=tk.W, padx=(0, 5))
 
         # Temperature controls
         ttk.Label(self.emr_frame, text="Thermal Parameters",
@@ -2308,7 +2308,7 @@ For detailed physics equations, see the Physics Guide tab.
             width=8).pack(side=tk.RIGHT)
 
         ttk.Label(self.emr_frame, text="kg/s (kilograms per second)",
-                  foreground="blue").pack(anchor=tk.W, padx=(0, 5))
+                  foreground="yellow").pack(anchor=tk.W, padx=(0, 5))
 
         # Safety parameters
         ttk.Label(self.emr_frame, text="Safety Parameters",
