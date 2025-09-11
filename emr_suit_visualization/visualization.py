@@ -5,6 +5,8 @@ from matplotlib.patches import Circle
 from matplotlib.colors import LinearSegmentedColormap
 import matplotlib.gridspec as gridspec
 from scipy import interpolate
+from scipy.interpolate import RegularGridInterpolator
+from scipy.ndimage import gaussian_filter
 import sympy as sp
 import pandas as pd
 from datetime import datetime
@@ -27,10 +29,34 @@ class EMRVisualization:
         self.mu0 = 4 * np.pi * 1e-7  # Permeability of free space
         self.k = 1.380649e-23  # Boltzmann constant
 
-        # Custom colormap for heatmaps
+        # Dark theme colors (white text, deep dark grey backgrounds, dark orange accents)
+        self.dark_colors = {
+            'bg_primary': '#1a1a1a',      # Deep dark grey background
+            'bg_secondary': '#2a2a2a',    # Slightly lighter deep grey
+            'bg_tertiary': '#333333',     # Even lighter deep grey
+            'fg_primary': '#ffffff',      # White text
+            'fg_secondary': '#cccccc',    # Light grey text
+            'fg_accent': '#ff6b35',       # Dark orange accent (changed from cyan)
+            'border': '#404040',          # Dark border color
+        }
+
+        # Custom colormap for heatmaps (dark theme compatible)
         self.heatmap_cmap = LinearSegmentedColormap.from_list(
-            "emr_heatmap", ["blue", "cyan", "green", "yellow", "red"]
+            "emr_heatmap", ["#1e3a8a", "#ffff00", "#10b981", "#eab308", "#dc2626"]
         )
+
+        # Apply dark theme to matplotlib
+        plt.style.use('dark_background')
+        plt.rcParams['figure.facecolor'] = self.dark_colors['bg_primary']
+        plt.rcParams['axes.facecolor'] = self.dark_colors['bg_secondary']
+        plt.rcParams['axes.edgecolor'] = self.dark_colors['border']
+        plt.rcParams['axes.labelcolor'] = self.dark_colors['fg_primary']
+        plt.rcParams['text.color'] = self.dark_colors['fg_primary']
+        plt.rcParams['xtick.color'] = self.dark_colors['fg_secondary']
+        plt.rcParams['ytick.color'] = self.dark_colors['fg_secondary']
+        plt.rcParams['grid.color'] = self.dark_colors['border']
+        plt.rcParams['savefig.facecolor'] = self.dark_colors['bg_primary']
+        plt.rcParams['savefig.edgecolor'] = self.dark_colors['bg_primary']
 
     def generate_emr_data(self):
         """
@@ -98,8 +124,17 @@ class EMRVisualization:
             if i < len(data):
                 Z[mask] = data[i]
 
-        # Smooth the data
-        Z_smooth = interpolate.interp2d(x, y, Z, kind='cubic')(x, y)
+        # Smooth the data using RegularGridInterpolator (modern replacement for interp2d)
+        try:
+            # Create interpolator
+            interp = RegularGridInterpolator((y, x), Z, method='cubic', bounds_error=False, fill_value=0)
+            # Create points for interpolation
+            XX, YY = np.meshgrid(x, y)
+            points = np.column_stack((YY.ravel(), XX.ravel()))
+            Z_smooth = interp(points).reshape(Z.shape)
+        except:
+            # Fallback to simple smoothing if interpolation fails
+            Z_smooth = gaussian_filter(Z, sigma=1.0)
 
         # Create heatmap
         heatmap = ax.contourf(X, Y, Z_smooth, levels=20, cmap=self.heatmap_cmap, alpha=0.7)
@@ -181,7 +216,7 @@ class EMRVisualization:
         # Thermal efficiency
         ax6 = fig.add_subplot(gs[1, 2])
         thermal_eff = data['thermal']['eta'].mean() * 100
-        ax6.pie([thermal_eff, 100-thermal_eff], colors=['cyan', 'lightgray'],
+        ax6.pie([thermal_eff, 100-thermal_eff], colors=['yellow', 'lightgray'],
                labels=[f'{thermal_eff:.1f}%', ''], startangle=90)
         ax6.set_title('Thermal Efficiency')
 
@@ -303,14 +338,15 @@ class EMRVisualization:
 
     def create_main_visualization(self, fig, data):
         """
-        Create the main EMR suit visualization layout
+        Create the main EMR suit visualization layout with improved spacing
         """
         fig.clear()
 
-        # Create main grid layout
-        gs = gridspec.GridSpec(3, 4, figure=fig, hspace=0.3, wspace=0.3)
+        # Create main grid layout with compact modern spacing
+        gs = gridspec.GridSpec(4, 3, figure=fig, hspace=0.2, wspace=0.15,
+                              left=0.03, right=0.97, top=0.97, bottom=0.03)
 
-        # Body model with heatmap
+        # Body model with heatmap (top row, spans 2 columns)
         ax_body = fig.add_subplot(gs[0:2, 0:2])
         self.body_model.create_body_silhouette(ax_body, self.current_view)
         regions = self.body_model.get_body_regions()
@@ -318,31 +354,96 @@ class EMRVisualization:
         self.body_model.add_thrust_pods(ax_body)
         self.body_model.setup_plot(ax_body, "EMR Suit - Body Heatmap")
 
-        # Vector field
+        # Vector field (top row, right column)
         ax_vector = fig.add_subplot(gs[0, 2])
         self.create_vector_field(ax_vector, data)
 
-        # Thermal contours
-        ax_thermal = fig.add_subplot(gs[0, 3])
+        # Thermal contours (second row, right column)
+        ax_thermal = fig.add_subplot(gs[1, 2])
         self.create_thermal_contours(ax_thermal, data)
 
-        # Flow visualization
-        ax_flow = fig.add_subplot(gs[1, 2])
+        # Flow visualization (third row, left column)
+        ax_flow = fig.add_subplot(gs[2, 0])
         self.create_flow_visualization(ax_flow, data)
 
-        # Control feedback
-        ax_control = fig.add_subplot(gs[1, 3])
+        # Control feedback (third row, middle column)
+        ax_control = fig.add_subplot(gs[2, 1])
         self.create_control_feedback(ax_control, data)
 
-        # Status gauges (bottom row)
-        self.create_status_gauges(fig, data)
+        # Status gauges (bottom row, spans all 3 columns)
+        self.create_status_gauges_improved(fig, data)
 
-        # Add alerts
+        # Add alerts with better positioning
         alerts = self.create_alert_system(data)
         if alerts:
             alert_text = "\n".join(alerts)
             fig.text(0.02, 0.02, f"ALERTS:\n{alert_text}",
-                    fontsize=10, color='red', fontweight='bold',
-                    bbox=dict(boxstyle="round,pad=0.3", facecolor="yellow", alpha=0.8))
+                    fontsize=9, color='red', fontweight='bold',
+                    bbox=dict(boxstyle="round,pad=0.3", facecolor="yellow", alpha=0.9),
+                    verticalalignment='bottom')
 
+        # Ensure tight layout
         plt.tight_layout()
+
+    def create_status_gauges_improved(self, fig, data):
+        """
+        Create improved component status indicators with better layout
+        """
+        # Create a separate subplot for status gauges at the bottom
+        gs_bottom = gridspec.GridSpec(1, 6, figure=fig, left=0.03, right=0.97,
+                                     top=0.25, bottom=0.03, wspace=0.15)
+
+        # Thrust pods status (compact version)
+        ax1 = fig.add_subplot(gs_bottom[0, 0])
+        pods = ['L', 'R', 'LL', 'RL', 'B']
+        thrust_values = data['performance']['thrust']
+        colors = ['#10b981' if t > 300 else '#eab308' if t > 200 else '#dc2626' for t in thrust_values]
+
+        bars = ax1.bar(pods, thrust_values, color=colors, width=0.6)
+        ax1.set_ylabel('N', fontsize=8, color=self.dark_colors['fg_primary'])
+        ax1.set_title('Thrust', fontsize=10, color=self.dark_colors['fg_accent'])
+        ax1.set_ylim(0, 500)
+        ax1.tick_params(axis='both', which='major', labelsize=8, colors=self.dark_colors['fg_secondary'])
+
+        # Efficiency gauge
+        ax2 = fig.add_subplot(gs_bottom[0, 1])
+        efficiency = data['performance']['efficiency'].mean() * 100
+        ax2.pie([efficiency, 100-efficiency], colors=['#10b981', self.dark_colors['bg_tertiary']],
+               labels=[f'{efficiency:.0f}%', ''], startangle=90, textprops={'fontsize': 8, 'color': self.dark_colors['fg_primary']})
+        ax2.set_title('Efficiency', fontsize=10, color=self.dark_colors['fg_accent'])
+
+        # Power consumption
+        ax3 = fig.add_subplot(gs_bottom[0, 2])
+        power_values = data['performance']['power']
+        ax3.plot(range(len(pods)), power_values, 'o-', color=self.dark_colors['fg_accent'], linewidth=1, markersize=4)
+        ax3.set_ylabel('kW', fontsize=8, color=self.dark_colors['fg_primary'])
+        ax3.set_title('Power', fontsize=10, color=self.dark_colors['fg_accent'])
+        ax3.set_xticks(range(len(pods)))
+        ax3.set_xticklabels(pods, fontsize=8, color=self.dark_colors['fg_secondary'])
+        ax3.tick_params(axis='both', which='major', labelsize=8, colors=self.dark_colors['fg_secondary'])
+        ax3.grid(True, alpha=0.3, color=self.dark_colors['border'])
+
+        # Safety factor
+        ax4 = fig.add_subplot(gs_bottom[0, 3])
+        sf_mean = data['safety']['sf'].mean()
+        ax4.bar(['SF'], [sf_mean], color=self.dark_colors['fg_accent'], width=0.5)
+        ax4.set_ylim(0, 5)
+        ax4.axhline(y=2, color='#dc2626', linestyle='--', alpha=0.7, linewidth=1)
+        ax4.set_title('Safety', fontsize=10, color=self.dark_colors['fg_accent'])
+        ax4.tick_params(axis='both', which='major', labelsize=8, colors=self.dark_colors['fg_secondary'])
+
+        # Risk probability
+        ax5 = fig.add_subplot(gs_bottom[0, 4])
+        risk_mean = data['safety']['risk'].mean()
+        ax5.semilogy(['Risk'], [risk_mean], 'rx', color='#dc2626', markersize=6)
+        ax5.set_title('Risk', fontsize=10, color=self.dark_colors['fg_accent'])
+        ax5.set_ylabel('Prob.', fontsize=8, color=self.dark_colors['fg_primary'])
+        ax5.tick_params(axis='both', which='major', labelsize=8, colors=self.dark_colors['fg_secondary'])
+        ax5.grid(True, alpha=0.3, color=self.dark_colors['border'])
+
+        # Thermal efficiency
+        ax6 = fig.add_subplot(gs_bottom[0, 5])
+        thermal_eff = data['thermal']['eta'].mean() * 100
+        ax6.pie([thermal_eff, 100-thermal_eff], colors=['#ffff00', self.dark_colors['bg_tertiary']],
+               labels=[f'{thermal_eff:.0f}%', ''], startangle=90, textprops={'fontsize': 8, 'color': self.dark_colors['fg_primary']})
+        ax6.set_title('Thermal', fontsize=10, color=self.dark_colors['fg_accent'])

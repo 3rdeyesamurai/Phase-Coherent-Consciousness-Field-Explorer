@@ -22,6 +22,17 @@ import os
 import sys
 import subprocess
 import threading
+from datetime import datetime
+
+# Import EMR Suit Visualization components
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'emr_suit_visualization'))
+try:
+    from visualization import EMRVisualization
+    from body_model import EMRBodyModel
+    EMR_AVAILABLE = True
+except ImportError:
+    EMR_AVAILABLE = False
+    print("EMR Suit Visualization not available - some features will be disabled")
 
 
 class IonicPropulsionGUI:
@@ -30,6 +41,196 @@ class IonicPropulsionGUI:
         self.root.title("🚀 Enhanced Ionic Propulsion Lab")
         self.root.geometry("1400x900")
         self.root.minsize(1200, 800)
+
+        # Apply dark theme styling
+        self.apply_dark_theme()
+
+    def apply_dark_theme(self):
+        """Apply modern dark grey theme to the entire application"""
+        # Define dark theme colors (white text, deep dark grey backgrounds, dark orange accents)
+        self.dark_colors = {
+            'bg_primary': '#1a1a1a',      # Deep dark grey background
+            'bg_secondary': '#2a2a2a',    # Slightly lighter deep grey
+            'bg_tertiary': '#333333',     # Even lighter deep grey
+            'fg_primary': '#ffffff',      # White text
+            'fg_secondary': '#cccccc',    # Light grey text
+            'fg_accent': '#ff6b35',       # Dark orange accent
+            'border': '#404040',          # Dark border color
+            'button_bg': '#3a3a3a',       # Dark button background
+            'button_hover': '#4a4a4a',    # Dark button hover
+            'entry_bg': '#2a2a2a',        # Dark entry background
+            'scrollbar': '#404040',       # Dark scrollbar color
+            'notebook_tab': '#2a2a2a',    # Dark notebook tab background
+            'notebook_active': '#3a3a3a', # Dark active tab background
+        }
+
+        # Configure root window
+        self.root.configure(bg=self.dark_colors['bg_primary'])
+
+        # Configure ttk styles
+        style = ttk.Style()
+
+        # Configure main frames
+        style.configure('TFrame', background=self.dark_colors['bg_primary'])
+        style.configure('TLabelFrame', background=self.dark_colors['bg_primary'],
+                       foreground=self.dark_colors['fg_primary'],
+                       bordercolor=self.dark_colors['border'])
+        style.configure('TLabelFrame.Label', background=self.dark_colors['bg_primary'],
+                       foreground='#666666',  # Dark grey for section titles
+                       font=('Segoe UI', 10, 'bold'))
+
+        # Configure labels
+        style.configure('TLabel', background=self.dark_colors['bg_primary'],
+                       foreground=self.dark_colors['fg_primary'],
+                       font=('Segoe UI', 10, 'normal'))
+
+        # Configure buttons with modern styling
+        style.configure('TButton',
+                       background=self.dark_colors['button_bg'],
+                       foreground=self.dark_colors['fg_primary'],
+                       bordercolor=self.dark_colors['border'],
+                       font=('Segoe UI', 9, 'bold'),
+                       padding=8)
+        style.map('TButton',
+                 background=[('active', self.dark_colors['button_hover']),
+                           ('pressed', self.dark_colors['bg_tertiary'])],
+                 foreground=[('active', self.dark_colors['fg_accent'])],
+                 bordercolor=[('active', self.dark_colors['border'])],
+                 relief=[('pressed', 'sunken')])
+
+        # Configure entry fields
+        style.configure('TEntry',
+                       fieldbackground=self.dark_colors['entry_bg'],
+                       bordercolor=self.dark_colors['border'],
+                       insertcolor=self.dark_colors['fg_primary'],
+                       font=('Segoe UI', 9))
+
+        # Configure combobox
+        style.configure('TCombobox',
+                       fieldbackground=self.dark_colors['entry_bg'],
+                       background=self.dark_colors['button_bg'],
+                       bordercolor=self.dark_colors['border'],
+                       arrowcolor=self.dark_colors['fg_primary'],
+                       font=('Segoe UI', 9))
+        style.map('TCombobox',
+                 fieldbackground=[('readonly', self.dark_colors['entry_bg'])],
+                 selectbackground=[('readonly', self.dark_colors['bg_tertiary'])],
+                 selectforeground=[('readonly', self.dark_colors['fg_primary'])],
+                 background=[('active', self.dark_colors['button_hover'])],
+                 arrowcolor=[('active', self.dark_colors['fg_accent'])])
+
+        # Configure radiobuttons
+        style.configure('TRadiobutton',
+                       background=self.dark_colors['bg_primary'],
+                       foreground=self.dark_colors['fg_primary'],
+                       font=('Segoe UI', 9))
+        style.map('TRadiobutton',
+                 background=[('active', self.dark_colors['bg_primary'])],
+                 foreground=[('active', self.dark_colors['fg_accent'])],
+                 indicatorcolor=[('selected', self.dark_colors['fg_accent'])],
+                 indicatorbackground=[('selected', self.dark_colors['bg_primary'])],
+                 indicatorrelief=[('selected', 'flat')])
+
+        # Configure scales (sliders)
+        style.configure('TScale',
+                       background=self.dark_colors['bg_primary'],
+                       troughcolor=self.dark_colors['bg_tertiary'],
+                       bordercolor=self.dark_colors['border'],
+                       lightcolor=self.dark_colors['button_hover'],
+                       darkcolor=self.dark_colors['button_bg'])
+        style.map('TScale',
+                 background=[('active', self.dark_colors['bg_primary'])],
+                 troughcolor=[('active', self.dark_colors['bg_secondary'])],
+                 lightcolor=[('active', self.dark_colors['fg_accent'])],
+                 darkcolor=[('active', self.dark_colors['button_hover'])])
+
+        # Configure notebook (tabs)
+        style.configure('TNotebook',
+                       background=self.dark_colors['bg_primary'],
+                       bordercolor=self.dark_colors['border'],
+                       tabmargins=[2, 5, 2, 0])
+        style.configure('TNotebook.Tab',
+                       background=self.dark_colors['notebook_tab'],
+                       foreground=self.dark_colors['fg_secondary'],
+                       bordercolor=self.dark_colors['border'],
+                       font=('Segoe UI', 9, 'bold'),
+                       padding=[10, 5])
+        style.map('TNotebook.Tab',
+                 background=[('selected', self.dark_colors['notebook_active']),
+                           ('active', self.dark_colors['button_hover'])],
+                 foreground=[('selected', self.dark_colors['fg_accent']),
+                           ('active', self.dark_colors['fg_primary'])],
+                 bordercolor=[('selected', self.dark_colors['border'])],
+                 expand=[('selected', [1, 1, 1, 0])])
+
+        # Configure scrollbar
+        style.configure('TScrollbar',
+                       background=self.dark_colors['scrollbar'],
+                       troughcolor=self.dark_colors['bg_secondary'],
+                       bordercolor=self.dark_colors['border'],
+                       arrowcolor=self.dark_colors['fg_primary'],
+                       width=16)
+        style.map('TScrollbar',
+                 background=[('active', self.dark_colors['button_hover'])],
+                 arrowcolor=[('active', self.dark_colors['fg_accent'])],
+                 troughcolor=[('active', self.dark_colors['bg_tertiary'])],
+                 bordercolor=[('active', self.dark_colors['border'])],
+                 relief=[('pressed', 'sunken')])
+
+        # Configure progressbar (if used)
+        style.configure('TProgressbar',
+                       background=self.dark_colors['fg_accent'],
+                       troughcolor=self.dark_colors['bg_tertiary'],
+                       bordercolor=self.dark_colors['border'],
+                       lightcolor=self.dark_colors['fg_accent'],
+                       darkcolor=self.dark_colors['fg_accent'])
+
+        # Apply theme to existing widgets
+        self.root.option_add('*TCombobox*Listbox.background', self.dark_colors['bg_secondary'])
+        self.root.option_add('*TCombobox*Listbox.foreground', self.dark_colors['fg_primary'])
+        self.root.option_add('*TCombobox*Listbox.selectBackground', self.dark_colors['fg_accent'])
+        self.root.option_add('*TCombobox*Listbox.selectForeground', self.dark_colors['bg_primary'])
+
+        # Configure menu
+        self.root.option_add('*Menu.background', self.dark_colors['bg_secondary'])
+        self.root.option_add('*Menu.foreground', self.dark_colors['fg_primary'])
+        self.root.option_add('*Menu.selectColor', self.dark_colors['fg_accent'])
+        self.root.option_add('*Menu.activeBackground', self.dark_colors['button_hover'])
+        self.root.option_add('*Menu.activeForeground', self.dark_colors['fg_primary'])
+
+        # Configure text widgets
+        self.root.option_add('*Text.background', self.dark_colors['entry_bg'])
+        self.root.option_add('*Text.foreground', self.dark_colors['fg_primary'])
+        self.root.option_add('*Text.insertBackground', self.dark_colors['fg_accent'])
+        self.root.option_add('*Text.selectBackground', self.dark_colors['fg_accent'])
+        self.root.option_add('*Text.selectForeground', self.dark_colors['bg_primary'])
+
+        # Configure scrolled text
+        self.root.option_add('*ScrolledText.background', self.dark_colors['entry_bg'])
+        self.root.option_add('*ScrolledText.foreground', self.dark_colors['fg_primary'])
+        self.root.option_add('*ScrolledText.insertBackground', self.dark_colors['fg_accent'])
+        self.root.option_add('*ScrolledText.selectBackground', self.dark_colors['fg_accent'])
+        self.root.option_add('*ScrolledText.selectForeground', self.dark_colors['bg_primary'])
+
+        # Configure canvas (for scrollable areas)
+        self.root.option_add('*Canvas.background', self.dark_colors['bg_primary'])
+
+        # Configure status bar
+        self.root.option_add('*Label.background', self.dark_colors['bg_primary'])
+        self.root.option_add('*Label.foreground', self.dark_colors['fg_primary'])
+
+        # Set matplotlib style to dark background
+        plt.style.use('dark_background')
+        plt.rcParams['figure.facecolor'] = self.dark_colors['bg_primary']
+        plt.rcParams['axes.facecolor'] = self.dark_colors['bg_secondary']
+        plt.rcParams['axes.edgecolor'] = self.dark_colors['border']
+        plt.rcParams['axes.labelcolor'] = self.dark_colors['fg_primary']
+        plt.rcParams['text.color'] = self.dark_colors['fg_primary']
+        plt.rcParams['xtick.color'] = self.dark_colors['fg_secondary']
+        plt.rcParams['ytick.color'] = self.dark_colors['fg_secondary']
+        plt.rcParams['grid.color'] = self.dark_colors['border']
+        plt.rcParams['savefig.facecolor'] = self.dark_colors['bg_primary']
+        plt.rcParams['savefig.edgecolor'] = self.dark_colors['bg_primary']
 
         # Initialize variables
         self.calc = None
@@ -358,6 +559,10 @@ class IonicPropulsionGUI:
 
         # Sweep parameter controls
         self.create_sweep_controls()
+
+        # EMR Suit Parameter Controls (only if available)
+        if EMR_AVAILABLE:
+            self.create_emr_parameter_controls()
 
         # Control buttons
         button_frame = ttk.Frame(self.left_panel)
@@ -1031,6 +1236,13 @@ class IonicPropulsionGUI:
         self.results_notebook.add(plot_frame, text="📈 Interactive Plot")
 
         self.create_plot_area(plot_frame)
+
+        # EMR Suit Visualization tab (only if available)
+        if EMR_AVAILABLE:
+            emr_frame = ttk.Frame(self.results_notebook)
+            self.results_notebook.add(emr_frame, text="🦸 EMR Suit Monitor")
+
+            self.create_emr_visualization(emr_frame)
 
     def create_realtime_results(self, parent):
         """Create real-time results display"""
@@ -1963,6 +2175,537 @@ For detailed physics equations, see the Physics Guide tab.
             command=help_window.destroy).pack(
             pady=10)
 
+    def create_emr_parameter_controls(self):
+        """Create EMR Suit parameter controls"""
+        if not EMR_AVAILABLE:
+            return
+
+        # EMR Suit Parameter Controls
+        self.emr_frame = ttk.LabelFrame(
+            self.left_panel,
+            text="🦸 EMR Suit Parameters",
+            padding=10)
+        self.emr_frame.pack(fill=tk.X, pady=(0, 10))
+
+        # Initialize EMR variables
+        self.emr_current = tk.DoubleVar(value=100.0)  # Current (A)
+        self.emr_distance = tk.DoubleVar(value=0.02)  # Distance (m)
+        self.emr_temp_cold = tk.DoubleVar(value=270.0)  # Cold temperature (K)
+        self.emr_temp_hot = tk.DoubleVar(value=310.0)  # Hot temperature (K)
+        self.emr_flow_rate = tk.DoubleVar(value=1.2)  # Flow rate (kg/s)
+        self.emr_safety_factor = tk.DoubleVar(value=3.0)  # Safety factor
+        self.emr_risk_prob = tk.DoubleVar(value=1e-7)  # Risk probability
+        self.emr_thrust = tk.DoubleVar(value=350.0)  # Thrust per pod (N)
+        self.emr_power = tk.DoubleVar(value=2.5)  # Power per pod (kW)
+        self.emr_efficiency = tk.DoubleVar(value=0.8)  # Efficiency
+
+        # Current control
+        ttk.Label(self.emr_frame, text="Coil Current (A)",
+                  font=("Arial", 10, "bold")).pack(anchor=tk.W)
+        current_frame = ttk.Frame(self.emr_frame)
+        current_frame.pack(fill=tk.X, pady=(0, 10))
+
+        current_scale = ttk.Scale(
+            current_frame,
+            from_=10,
+            to=200,
+            variable=self.emr_current,
+            orient=tk.HORIZONTAL,
+            command=self.update_emr_calculations)
+        current_scale.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        ttk.Label(
+            current_frame,
+            textvariable=self.emr_current,
+            width=8).pack(side=tk.RIGHT)
+
+        ttk.Label(self.emr_frame, text="A (amperes)",
+                  foreground="blue").pack(anchor=tk.W, padx=(0, 5))
+
+        # Distance control
+        ttk.Label(self.emr_frame, text="Coil Distance (m)",
+                  font=("Arial", 10, "bold")).pack(anchor=tk.W)
+        distance_frame = ttk.Frame(self.emr_frame)
+        distance_frame.pack(fill=tk.X, pady=(0, 10))
+
+        distance_scale = ttk.Scale(
+            distance_frame,
+            from_=0.005,
+            to=0.1,
+            variable=self.emr_distance,
+            orient=tk.HORIZONTAL,
+            command=self.update_emr_calculations)
+        distance_scale.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        ttk.Label(
+            distance_frame,
+            textvariable=self.emr_distance,
+            width=8).pack(side=tk.RIGHT)
+
+        ttk.Label(self.emr_frame, text="m (meters)",
+                  foreground="blue").pack(anchor=tk.W, padx=(0, 5))
+
+        # Temperature controls
+        ttk.Label(self.emr_frame, text="Thermal Parameters",
+                  font=("Arial", 10, "bold")).pack(anchor=tk.W, pady=(10, 5))
+
+        # Cold temperature
+        ttk.Label(self.emr_frame, text="Cold Temperature (K)").pack(anchor=tk.W)
+        cold_temp_frame = ttk.Frame(self.emr_frame)
+        cold_temp_frame.pack(fill=tk.X, pady=(0, 5))
+
+        cold_temp_scale = ttk.Scale(
+            cold_temp_frame,
+            from_=250,
+            to=290,
+            variable=self.emr_temp_cold,
+            orient=tk.HORIZONTAL,
+            command=self.update_emr_calculations)
+        cold_temp_scale.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        ttk.Label(
+            cold_temp_frame,
+            textvariable=self.emr_temp_cold,
+            width=8).pack(side=tk.RIGHT)
+
+        # Hot temperature
+        ttk.Label(self.emr_frame, text="Hot Temperature (K)").pack(anchor=tk.W)
+        hot_temp_frame = ttk.Frame(self.emr_frame)
+        hot_temp_frame.pack(fill=tk.X, pady=(0, 10))
+
+        hot_temp_scale = ttk.Scale(
+            hot_temp_frame,
+            from_=300,
+            to=320,
+            variable=self.emr_temp_hot,
+            orient=tk.HORIZONTAL,
+            command=self.update_emr_calculations)
+        hot_temp_scale.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        ttk.Label(
+            hot_temp_frame,
+            textvariable=self.emr_temp_hot,
+            width=8).pack(side=tk.RIGHT)
+
+        # Flow rate control
+        ttk.Label(self.emr_frame, text="Propellant Flow Rate (kg/s)",
+                  font=("Arial", 10, "bold")).pack(anchor=tk.W)
+        flow_frame = ttk.Frame(self.emr_frame)
+        flow_frame.pack(fill=tk.X, pady=(0, 10))
+
+        flow_scale = ttk.Scale(
+            flow_frame,
+            from_=0.5,
+            to=2.0,
+            variable=self.emr_flow_rate,
+            orient=tk.HORIZONTAL,
+            command=self.update_emr_calculations)
+        flow_scale.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        ttk.Label(
+            flow_frame,
+            textvariable=self.emr_flow_rate,
+            width=8).pack(side=tk.RIGHT)
+
+        ttk.Label(self.emr_frame, text="kg/s (kilograms per second)",
+                  foreground="blue").pack(anchor=tk.W, padx=(0, 5))
+
+        # Safety parameters
+        ttk.Label(self.emr_frame, text="Safety Parameters",
+                  font=("Arial", 10, "bold")).pack(anchor=tk.W, pady=(10, 5))
+
+        # Safety factor
+        ttk.Label(self.emr_frame, text="Safety Factor").pack(anchor=tk.W)
+        safety_frame = ttk.Frame(self.emr_frame)
+        safety_frame.pack(fill=tk.X, pady=(0, 5))
+
+        safety_scale = ttk.Scale(
+            safety_frame,
+            from_=2.0,
+            to=5.0,
+            variable=self.emr_safety_factor,
+            orient=tk.HORIZONTAL,
+            command=self.update_emr_calculations)
+        safety_scale.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        ttk.Label(
+            safety_frame,
+            textvariable=self.emr_safety_factor,
+            width=8).pack(side=tk.RIGHT)
+
+        # Risk probability
+        ttk.Label(self.emr_frame, text="Risk Probability").pack(anchor=tk.W)
+        risk_frame = ttk.Frame(self.emr_frame)
+        risk_frame.pack(fill=tk.X, pady=(0, 10))
+
+        risk_scale = ttk.Scale(
+            risk_frame,
+            from_=1e-8,
+            to_=1e-5,
+            variable=self.emr_risk_prob,
+            orient=tk.HORIZONTAL,
+            command=self.update_emr_calculations)
+        risk_scale.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        ttk.Label(
+            risk_frame,
+            textvariable=self.emr_risk_prob,
+            width=12).pack(side=tk.RIGHT)
+
+        # Performance parameters
+        ttk.Label(self.emr_frame, text="Performance Parameters",
+                  font=("Arial", 10, "bold")).pack(anchor=tk.W, pady=(10, 5))
+
+        # Thrust per pod
+        ttk.Label(self.emr_frame, text="Thrust per Pod (N)").pack(anchor=tk.W)
+        thrust_frame = ttk.Frame(self.emr_frame)
+        thrust_frame.pack(fill=tk.X, pady=(0, 5))
+
+        thrust_scale = ttk.Scale(
+            thrust_frame,
+            from_=200,
+            to=500,
+            variable=self.emr_thrust,
+            orient=tk.HORIZONTAL,
+            command=self.update_emr_calculations)
+        thrust_scale.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        ttk.Label(
+            thrust_frame,
+            textvariable=self.emr_thrust,
+            width=8).pack(side=tk.RIGHT)
+
+        # Power per pod
+        ttk.Label(self.emr_frame, text="Power per Pod (kW)").pack(anchor=tk.W)
+        power_frame = ttk.Frame(self.emr_frame)
+        power_frame.pack(fill=tk.X, pady=(0, 5))
+
+        power_scale = ttk.Scale(
+            power_frame,
+            from_=1.5,
+            to_=4.0,
+            variable=self.emr_power,
+            orient=tk.HORIZONTAL,
+            command=self.update_emr_calculations)
+        power_scale.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        ttk.Label(
+            power_frame,
+            textvariable=self.emr_power,
+            width=8).pack(side=tk.RIGHT)
+
+        # Efficiency
+        ttk.Label(self.emr_frame, text="System Efficiency").pack(anchor=tk.W)
+        efficiency_frame = ttk.Frame(self.emr_frame)
+        efficiency_frame.pack(fill=tk.X, pady=(0, 10))
+
+        efficiency_scale = ttk.Scale(
+            efficiency_frame,
+            from_=0.6,
+            to_=0.9,
+            variable=self.emr_efficiency,
+            orient=tk.HORIZONTAL,
+            command=self.update_emr_calculations)
+        efficiency_scale.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        ttk.Label(
+            efficiency_frame,
+            textvariable=self.emr_efficiency,
+            width=8).pack(side=tk.RIGHT)
+
+        # EMR control buttons
+        emr_button_frame = ttk.Frame(self.emr_frame)
+        emr_button_frame.pack(fill=tk.X, pady=(10, 0))
+
+        ttk.Button(
+            emr_button_frame,
+            text="🔄 Update EMR",
+            command=self.update_emr_calculations).pack(
+            fill=tk.X,
+            pady=(0, 5))
+
+        ttk.Button(
+            emr_button_frame,
+            text="📊 Start Flight Logging",
+            command=self.start_emr_flight_logging).pack(
+            fill=tk.X,
+            pady=(0, 5))
+
+        ttk.Button(
+            emr_button_frame,
+            text="🛑 Stop Flight Logging",
+            command=self.stop_emr_flight_logging).pack(
+            fill=tk.X)
+
+    def update_emr_calculations(self, *args):
+        """Update EMR calculations when parameters change"""
+        if not EMR_AVAILABLE or not hasattr(self, 'emr_viz'):
+            return
+
+        try:
+            # Generate new EMR data based on current parameters
+            emr_data = self.generate_emr_data_from_params()
+
+            # Update EMR visualization
+            self.emr_viz.create_main_visualization(self.emr_figure, emr_data)
+            self.emr_canvas.draw()
+
+            # Update EMR metrics display
+            self.update_emr_metrics_display(emr_data)
+
+            # Update alerts
+            self.update_emr_alerts(emr_data)
+
+            # Log data if flight logging is active
+            if hasattr(self, 'emr_flight_logging') and self.emr_flight_logging:
+                self.emr_viz.log_data(emr_data)
+
+        except Exception as e:
+            print(f"EMR calculation error: {e}")
+
+    def generate_emr_data_from_params(self):
+        """Generate EMR data based on current parameter settings"""
+        # Use physics formulas to generate realistic data
+        I = self.emr_current.get()
+        d = self.emr_distance.get()
+        Tc = self.emr_temp_cold.get()
+        Th = self.emr_temp_hot.get()
+        flow_rate = self.emr_flow_rate.get()
+        sf = self.emr_safety_factor.get()
+        risk = self.emr_risk_prob.get()
+        thrust = self.emr_thrust.get()
+        power = self.emr_power.get()
+        efficiency = self.emr_efficiency.get()
+
+        # Calculate EMR force using physics formula: FEMR = μ0*I²/(2π*d)
+        mu0 = 4 * np.pi * 1e-7
+        femr = mu0 * I**2 / (2 * np.pi * d)
+
+        # Calculate thermal efficiency: η = 1 - Tc/Th
+        thermal_eff = 1 - Tc/Th
+
+        # Generate data for 6 body regions
+        femr_data = np.random.normal(femr, femr * 0.1, 6)
+        thermal_data = {
+            'Tc': np.random.normal(Tc, 5, 6),
+            'Th': np.random.normal(Th, 5, 6),
+            'eta': np.random.normal(thermal_eff, 0.05, 6)
+        }
+
+        # Generate flow rate data for 5 thrust pods
+        flow_data = np.random.normal(flow_rate, flow_rate * 0.1, 5)
+
+        # Safety data
+        safety_data = {
+            'sf': np.random.normal(sf, sf * 0.1, 6),
+            'risk': np.random.normal(risk, risk * 0.5, 6)
+        }
+
+        # Performance data
+        performance_data = {
+            'thrust': np.random.normal(thrust, thrust * 0.05, 5),
+            'power': np.random.normal(power, power * 0.05, 5),
+            'efficiency': np.random.normal(efficiency, efficiency * 0.05, 5)
+        }
+
+        return {
+            'femr': femr_data,
+            'thermal': thermal_data,
+            'flow_rate': flow_data,
+            'safety': safety_data,
+            'performance': performance_data,
+            'timestamp': datetime.now()
+        }
+
+    def create_emr_visualization(self, parent):
+        """Create EMR Suit visualization tab with scrollable layout"""
+        if not EMR_AVAILABLE:
+            ttk.Label(parent, text="EMR Suit Visualization not available",
+                     font=("Arial", 12)).pack(expand=True)
+            return
+
+        # Initialize EMR visualization
+        self.emr_viz = EMRVisualization()
+        self.emr_flight_logging = False
+
+        # Create scrollable frame for EMR content
+        emr_canvas = tk.Canvas(parent, bg='#f0f0f0')
+        emr_scrollbar = ttk.Scrollbar(parent, orient="vertical", command=emr_canvas.yview)
+        emr_scrollable_frame = ttk.Frame(emr_canvas)
+
+        emr_scrollable_frame.bind(
+            "<Configure>",
+            lambda e: emr_canvas.configure(scrollregion=emr_canvas.bbox("all"))
+        )
+
+        emr_canvas.create_window((0, 0), window=emr_scrollable_frame, anchor="nw")
+        emr_canvas.configure(yscrollcommand=emr_scrollbar.set)
+
+        # Pack the scrollable components
+        emr_canvas.pack(side="left", fill="both", expand=True)
+        emr_scrollbar.pack(side="right", fill="y")
+
+        # Bind mousewheel to canvas
+        def _on_emr_mousewheel(event):
+            emr_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        emr_canvas.bind_all("<MouseWheel>", _on_emr_mousewheel)
+
+        # EMR visualization canvas (larger for better visibility)
+        self.emr_figure = plt.Figure(figsize=(14, 10), dpi=100)
+        self.emr_canvas = FigureCanvasTkAgg(self.emr_figure, emr_scrollable_frame)
+        self.emr_canvas.get_tk_widget().pack(fill=tk.X, pady=(10, 0))
+
+        # EMR controls and metrics
+        emr_control_frame = ttk.Frame(emr_scrollable_frame)
+        emr_control_frame.pack(fill=tk.X, pady=(10, 0))
+
+        # View switch button
+        ttk.Button(
+            emr_control_frame,
+            text="🔄 Switch View (Front/Back)",
+            command=self.switch_emr_view).pack(side=tk.LEFT, padx=(0, 10))
+
+        # Manual update button
+        ttk.Button(
+            emr_control_frame,
+            text="🔄 Manual Update",
+            command=self.manual_emr_update).pack(side=tk.LEFT, padx=(0, 10))
+
+        # Save data button
+        ttk.Button(
+            emr_control_frame,
+            text="💾 Save EMR Data",
+            command=self.save_emr_data).pack(side=tk.LEFT, padx=(0, 10))
+
+        # EMR metrics display
+        emr_metrics_frame = ttk.LabelFrame(emr_scrollable_frame, text="EMR Real-Time Metrics", padding=10)
+        emr_metrics_frame.pack(fill=tk.X, pady=(10, 0))
+
+        # Create metrics display
+        self.emr_metrics_vars = {}
+        emr_metrics = [
+            ('EMR Force (N)', 'emr_force'),
+            ('Thermal Eff. (%)', 'thermal_eff'),
+            ('Flow Rate (kg/s)', 'flow_rate'),
+            ('Safety Factor', 'safety_factor'),
+            ('Risk Prob.', 'risk_prob'),
+            ('Thrust (N)', 'thrust'),
+            ('Power (kW)', 'power'),
+            ('Efficiency (%)', 'efficiency')
+        ]
+
+        emr_metrics_grid = ttk.Frame(emr_metrics_frame)
+        emr_metrics_grid.pack(fill=tk.X)
+
+        for i, (label, key) in enumerate(emr_metrics):
+            ttk.Label(emr_metrics_grid, text=f"{label}:").grid(row=i//4, column=(i%4)*2, sticky='w', padx=(0,5))
+            self.emr_metrics_vars[key] = ttk.Label(emr_metrics_grid, text="--", font=('Arial', 9, 'bold'))
+            self.emr_metrics_vars[key].grid(row=i//4, column=(i%4)*2+1, sticky='w')
+
+        # EMR alerts display
+        emr_alerts_frame = ttk.LabelFrame(emr_scrollable_frame, text="EMR System Alerts", padding=10)
+        emr_alerts_frame.pack(fill=tk.X, pady=(10, 0))
+
+        self.emr_alert_text = tk.Text(emr_alerts_frame, height=3, wrap=tk.WORD,
+                                    bg='#fffacd', fg='red', font=('Arial', 9))
+        self.emr_alert_text.pack(fill=tk.X)
+        self.emr_alert_text.insert(tk.END, "EMR system initializing... No alerts at this time.")
+        self.emr_alert_text.config(state=tk.DISABLED)
+
+        # Initial EMR visualization
+        emr_data = self.generate_emr_data_from_params()
+        self.emr_viz.create_main_visualization(self.emr_figure, emr_data)
+        self.emr_canvas.draw()
+
+        # Update EMR metrics
+        self.update_emr_metrics_display(emr_data)
+        self.update_emr_alerts(emr_data)
+
+    def switch_emr_view(self):
+        """Switch between front and back EMR suit views"""
+        if EMR_AVAILABLE and hasattr(self, 'emr_viz'):
+            if self.emr_viz.current_view == 'front':
+                self.emr_viz.current_view = 'back'
+            else:
+                self.emr_viz.current_view = 'front'
+
+            # Update visualization
+            emr_data = self.generate_emr_data_from_params()
+            self.emr_viz.create_main_visualization(self.emr_figure, emr_data)
+            self.emr_canvas.draw()
+
+    def manual_emr_update(self):
+        """Perform manual EMR data update"""
+        if EMR_AVAILABLE:
+            emr_data = self.generate_emr_data_from_params()
+            self.emr_viz.create_main_visualization(self.emr_figure, emr_data)
+            self.emr_canvas.draw()
+            self.update_emr_metrics_display(emr_data)
+            self.update_emr_alerts(emr_data)
+
+    def save_emr_data(self):
+        """Save EMR logged data to CSV"""
+        if EMR_AVAILABLE and hasattr(self, 'emr_viz'):
+            try:
+                self.emr_viz.save_log_to_csv()
+                messagebox.showinfo("Success", "EMR data saved successfully to emr_suit_log.csv")
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to save EMR data: {e}")
+
+    def update_emr_metrics_display(self, data):
+        """Update EMR metrics display"""
+        if not hasattr(self, 'emr_metrics_vars'):
+            return
+
+        metrics_updates = {
+            'emr_force': f"{data['femr'].mean():.2f}",
+            'thermal_eff': f"{data['thermal']['eta'].mean()*100:.1f}",
+            'flow_rate': f"{data['flow_rate'].mean():.2f}",
+            'safety_factor': f"{data['safety']['sf'].mean():.2f}",
+            'risk_prob': f"{data['safety']['risk'].max():.2e}",
+            'thrust': f"{data['performance']['thrust'].mean():.0f}",
+            'power': f"{data['performance']['power'].mean():.2f}",
+            'efficiency': f"{data['performance']['efficiency'].mean()*100:.1f}"
+        }
+
+        for key, value in metrics_updates.items():
+            if key in self.emr_metrics_vars:
+                self.emr_metrics_vars[key].config(text=value)
+
+    def update_emr_alerts(self, data):
+        """Update EMR alerts display"""
+        if not hasattr(self, 'emr_alert_text'):
+            return
+
+        alerts = self.emr_viz.create_alert_system(data)
+
+        self.emr_alert_text.config(state=tk.NORMAL)
+        self.emr_alert_text.delete(1.0, tk.END)
+
+        if alerts:
+            alert_text = "\n".join(alerts)
+            self.emr_alert_text.insert(tk.END, alert_text)
+            self.emr_alert_text.config(fg='red')
+        else:
+            self.emr_alert_text.insert(tk.END, "EMR system operating normally. No alerts.")
+            self.emr_alert_text.config(fg='green')
+
+        self.emr_alert_text.config(state=tk.DISABLED)
+
+    def start_emr_flight_logging(self):
+        """Start EMR flight logging"""
+        if EMR_AVAILABLE:
+            self.emr_flight_logging = True
+            self.status_var.set("✅ EMR flight logging started")
+            messagebox.showinfo("Flight Logging", "EMR flight logging has been started.\nData will be logged every update cycle.")
+
+    def stop_emr_flight_logging(self):
+        """Stop EMR flight logging"""
+        if EMR_AVAILABLE:
+            self.emr_flight_logging = False
+            self.status_var.set("🛑 EMR flight logging stopped")
+            messagebox.showinfo("Flight Logging", "EMR flight logging has been stopped.\nData has been saved to emr_suit_log.csv")
+
     def show_about(self):
         """Show about dialog"""
         about_text = """
@@ -1978,12 +2721,13 @@ FEATURES:
 • Comprehensive loss modeling
 • Interactive parameter adjustment
 • Professional plotting capabilities
-• Web-based visualization interface
+• EMR Suit Visualization and monitoring
 • Complete documentation and guides
 
 PHYSICS MODELS:
 • Ion Engine: Grid transparency, beam divergence, space-charge
 • Hall Thruster: Acceleration efficiency, propellant utilization
+• EMR Suit: Electromagnetic resonance, thermal management
 • Divergence: Cosine and Gaussian models
 • Multi-gas support: Xenon, Iodine, Krypton, Argon, Water
 
